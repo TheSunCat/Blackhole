@@ -1,8 +1,11 @@
-#ifndef BLACKHOLE_H
-#define BLACKHOLE_H
+#pragma once
 
 #include <QMainWindow>
 #include <QScopedPointer>
+#include <QDir>
+#include <string>
+
+static std::string blackholeName = "Blackhole v0.1";
 
 namespace Ui {
 class Blackhole;
@@ -16,8 +19,15 @@ public:
     explicit Blackhole(QWidget *parent = nullptr);
     ~Blackhole() override;
 
+    QDir m_gameDir;
+    int m_gameType = 0;
+
 private:
     QScopedPointer<Ui::Blackhole> m_ui;
-};
 
-#endif // BLACKHOLE_H
+    void btnSelectGameDirPressed();
+    void btnSettingsPressed();
+    void btnAboutPressed();
+
+    void openGameDir();
+};

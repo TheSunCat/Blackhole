@@ -1,4 +1,4 @@
-#include "blackhole.h"
+#include "ui/Blackhole.h"
 #include <QApplication>
 
 int main(int argc, char *argv[])
@@ -9,4 +9,3 @@ int main(int argc, char *argv[])
 
     return app.exec();
 }
-

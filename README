@@ -1,18 +1,12 @@
-CMake Qt5 GUI Template
+Blackhole
 ----------------------
 
-You need Qt5 and CMake 2.8.11 or higher
+Make sure your system has the Qt5 libraries installed
 
 -- Build instructions --
 
-cd /your/project/build
-cmake ../
+cd build
+cmake ..
 make
 
 ./blackhole
-
-
--- Tutorials and resources --
-
-Qt online docs
-https://doc.qt.io/
