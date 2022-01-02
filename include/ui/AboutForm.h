@@ -8,9 +8,6 @@ namespace Ui
 class AboutForm;
 }
 
-/**
- * @todo write docs
- */
 class AboutForm : public QDialog
 {
     Q_OBJECT

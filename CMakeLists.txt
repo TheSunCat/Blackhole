@@ -15,15 +15,18 @@ find_package(Qt5Widgets CONFIG REQUIRED)
 set(blackhole_SRC
   include/ui/Blackhole.h
   include/ui/AboutForm.h
+  include/ui/GalaxyEditorForm.h
+
   src/main.cpp
   src/ui/Blackhole.cpp
   src/ui/AboutForm.cpp
+  src/ui/GalaxyEditorForm.cpp
   src/filetypes/Yaz0.cpp
-  src/filetypes/Bcsv.cpp
   src/io/FileBase.cpp
   src/io/ExternalFile.cpp
   src/io/MemoryFile.cpp
   src/io/RarcFile.cpp
+  src/io/BcsvFile.cpp
   src/io/Yaz0File.cpp
 )
 

@@ -102,16 +102,18 @@ float FileBase::readFloat() const
     return ret;
 }
 
+#include <sstream>
 QString FileBase::readString() const
 {
-    QString ret = "";
+    std::wstringstream ret;
+    ret.imbue(std::locale(".932"));
 
     while(m_contents[m_curPos] != '\0')
     {
-        ret += char(readByte());
+        ret << readByte(); // TODO fix
     }
 
-    return ret;
+    return QString::fromStdWString(ret.str());
 }
 
 QByteArray FileBase::readBytes(uint32_t count) const
@@ -192,7 +194,7 @@ void FileBase::writeFloat(float val)
 }
 
 
-void FileBase::writeString(QString str)
+int FileBase::writeString(QString str)
 {
     // TODO no idea if this is right
 
@@ -204,6 +206,8 @@ void FileBase::writeString(QString str)
     // not using QByteArray::replace because we want to set m_modifiedFlag
     for(auto& byte : strBytes)
         writeByte(byte);
+
+    return strBytes.length();
 }
 
 void FileBase::writeBytes(QByteArray bytes)

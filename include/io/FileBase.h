@@ -41,7 +41,7 @@ public:
     void writeShort(uint16_t val);
     void writeInt(uint32_t val);
     void writeFloat(float val);
-    void writeString(QString str); // TODO should we assume UTF-16 encoding?
+    int writeString(QString str); // TODO should we assume UTF-16 encoding?
     void writeBytes(QByteArray bytes);
 
     virtual QByteArray getContents() const;

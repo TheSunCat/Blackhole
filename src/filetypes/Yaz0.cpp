@@ -5,8 +5,6 @@
 
 QByteArray Yaz0::decompress(QByteArray data)
 {
-
-
     if(!data.startsWith("Yaz0"))
         return data; // TODO error message?
 

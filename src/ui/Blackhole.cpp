@@ -1,11 +1,13 @@
 #include "ui/Blackhole.h"
 #include "ui_Blackhole.h"
 
-#include "filetypes/Bcsv.h"
+#include "io/BcsvFile.h"
 #include "ui/AboutForm.h"
+#include "ui/GalaxyEditorForm.h"
 
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QListWidget>
 
 
 Blackhole::Blackhole(QWidget *parent) :
@@ -16,6 +18,7 @@ Blackhole::Blackhole(QWidget *parent) :
     connect(m_ui->btnSelectGameDir, &QPushButton::clicked, this, &Blackhole::btnSelectGameDirPressed);
     connect(m_ui->btnSettings, &QPushButton::clicked, this, &Blackhole::btnSettingsPressed);
     connect(m_ui->btnAbout, &QPushButton::clicked, this, &Blackhole::btnAboutPressed);
+    connect(m_ui->galaxyListView, &QListWidget::itemDoubleClicked, this, &Blackhole::galaxyListDoubleClicked);
 }
 
 Blackhole::~Blackhole()
@@ -46,6 +49,14 @@ void Blackhole::btnSettingsPressed()
 
 }
 
+void Blackhole::galaxyListDoubleClicked(QListWidgetItem* item)
+{
+    GalaxyEditorForm *form = new GalaxyEditorForm(this, item->text());
+    form->show();
+
+}
+
+
 void Blackhole::openGameDir()
 {
     QDir stageData = m_gameDir;
@@ -71,7 +82,7 @@ void Blackhole::openGameDir()
 
     for(QString galaxy : galaxies)
     {
-        Bcsv::addHash(galaxy);
+        BcsvFile::addHash(galaxy);
 
         QFileInfo galaxyScenario = stageData.path() + '/' + galaxy + '/' + galaxy + "Scenario.arc";
         if(!galaxyScenario.exists())

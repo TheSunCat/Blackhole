@@ -5,6 +5,8 @@
 #include <QDir>
 #include <string>
 
+class QListWidgetItem;
+
 static std::string blackholeName = "Blackhole v0.1";
 
 namespace Ui {
@@ -28,6 +30,7 @@ private:
     void btnSelectGameDirPressed();
     void btnSettingsPressed();
     void btnAboutPressed();
+    void galaxyListDoubleClicked(QListWidgetItem* item);
 
     void openGameDir();
 };

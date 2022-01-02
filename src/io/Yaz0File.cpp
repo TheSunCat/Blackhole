@@ -13,6 +13,5 @@ void Yaz0File::save()
 {
     QByteArray compBuffer = Yaz0::compress(m_contents);
 
-
-    close();
+    // TODO do this
 }
