@@ -3,11 +3,11 @@
 
 #include <ui/Blackhole.h>
 
-GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, QString galaxyName) :
-    QDialog(parent), m_ui(new Ui::GalaxyEditorForm)
+GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
+    QDialog(parent), m_ui(new Ui::GalaxyEditorForm), m_galaxy(galaxyName)
 {
     m_ui->setupUi(this);
-    setWindowTitle(QString::fromStdString(blackholeName) + " - Editing " + galaxyName);
+    setWindowTitle(QString::fromStdString(blackholeName) + " - Editing " + m_galaxy.name);
 
 }
 

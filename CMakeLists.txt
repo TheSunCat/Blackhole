@@ -28,6 +28,7 @@ set(blackhole_SRC
   src/io/RarcFile.cpp
   src/io/BcsvFile.cpp
   src/io/Yaz0File.cpp
+  src/smg/Galaxy.cpp
 )
 
 # Tell CMake to create the helloworld executable

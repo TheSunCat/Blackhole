@@ -1,6 +1,7 @@
 #pragma once
 
-#include <cstdint>
+#include "Constants.h"
+
 #include <QByteArray>
 
 class QString;

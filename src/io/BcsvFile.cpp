@@ -151,7 +151,7 @@ void BcsvFile::save()
             case 6:
             {
                 QString val = std::get<QString>(entry[field.nameHash]);
-                if(stringOffsets.contains(val))
+                if(stringOffsets.find(val) != stringOffsets.end())
                 {
                     file->writeInt(stringOffsets[val]);
                 }
@@ -181,6 +181,11 @@ void BcsvFile::save()
     file->save();
 }
 
+void BcsvFile::close()
+{
+    file->close();
+}
+
 BcsvFile::Field BcsvFile::addField(const QString& name, uint32_t mask, uint16_t offset, uint8_t shift, uint8_t type,  Value defaultValue)
 {
     addHash(name); // nyeh heh heh
@@ -191,7 +196,7 @@ BcsvFile::Field BcsvFile::addField(const QString& name, uint32_t mask, uint16_t 
         shift = 0;
     }
 
-    if(offset == std::numeric_limits<uint16_t>::max())
+    if(offset == MAX_U16)
     {
         for(const auto& [nameHash, field]: fields)
         {

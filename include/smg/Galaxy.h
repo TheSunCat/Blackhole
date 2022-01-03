@@ -3,6 +3,8 @@
 #include <vector>
 #include <QString>
 
+#include "io/BcsvFile.h"
+
 struct Galaxy
 {
     Galaxy(QString galaxyName);
@@ -10,4 +12,4 @@ struct Galaxy
     QString name;
     std::vector<QString> zoneList;
     std::vector<BcsvFile::Entry> scenarioData;
-}
+};

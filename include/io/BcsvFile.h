@@ -2,7 +2,6 @@
 
 #include "io/FileBase.h"
 
-#include <cstdint>
 #include <unordered_map>
 #include <vector>
 #include <variant>
@@ -15,11 +14,6 @@ public:
     static uint32_t fieldNameToHash(const QString& fieldName);
     static QString hashToFieldName(uint32_t hash);
     static void addHash(QString field);
-
-
-private:
-    static std::unordered_map<uint32_t, QString> LOOKUP;
-
 
     struct Field {
         uint32_t nameHash;
@@ -54,12 +48,13 @@ private:
         bool contains(const QString& key) const;
     };
 
+private:
+    static std::unordered_map<uint32_t, QString> LOOKUP;
+
+
     // ------------------------
     // actual class starts here
     // ------------------------
-
-    std::unordered_map<uint32_t, Field> fields;
-    std::vector<Entry> entries;
 
     FileBase* file;
 
@@ -67,8 +62,12 @@ public:
     BcsvFile(FileBase* inRarcFile);
 
     void save();
+    void close();
 
     Field addField(const QString& name, uint32_t mask, uint16_t offset, uint8_t shift, uint8_t type,  Value defaultValue);
 
     void removeField(const QString& name);
+
+    std::unordered_map<uint32_t, Field> fields;
+    std::vector<Entry> entries;
 };
