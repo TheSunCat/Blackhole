@@ -3,6 +3,7 @@
 #include <stack>
 
 #include "io/Yaz0File.h"
+#include "io/InRarcFile.h"
 #include "Util.h"
 
 RarcFile::RarcFile(const QString& rarcFilePath) : m_filePath(rarcFilePath)
@@ -316,6 +317,10 @@ QStringList RarcFile::getSubDirectories(const QString& dirName)
     return ret;
 }
 
+bool RarcFile::directoryExists(const std::string& dirName)
+{
+    return directoryExists(QString::fromStdString(dirName));
+}
 
 bool RarcFile::directoryExists(const QString& dirName)
 {
@@ -376,6 +381,132 @@ void RarcFile::rmDir(const QString& dirName)
         //parent->childrenDirs.erase(parent->childrenDirs[]);
 
 }
+
+QStringList RarcFile::getFiles(const QString& dirName)
+{
+    QStringList ret;
+    if(!directoryExists(QString::fromStdString(pathToKey(dirName))))
+        return ret;
+
+    DirEntry* dir = dirEntries[pathToKey(dirName)];
+
+    for(FileEntry* file : dir->childrenFiles)
+        ret.push_back(file->name);
+
+    return ret;
+}
+
+bool RarcFile::fileExists(const std::string& filePath)
+{
+    return fileExists(QString::fromStdString(filePath));
+}
+
+
+bool RarcFile::fileExists(const QString& filePath)
+{
+    return fileEntries.find(pathToKey(filePath)) != fileEntries.end();
+}
+
+void RarcFile::mkFile(const QString& dirName, const QString& fileName)
+{
+    // TODO fix this mess of mixing std::string with QString
+    QString fullName = dirName + '/' + fileName;
+    std::string parentKey = pathToKey(dirName);
+    std::string fnKey = pathToKey(fullName);
+
+    if(!directoryExists(parentKey)
+            || fileExists(fnKey)
+            || directoryExists(fnKey))
+        return;
+
+    DirEntry* parentDir = dirEntries[parentKey];
+
+    FileEntry* fileEntry = new FileEntry
+    {
+        parentDir,
+        0, // dataOffset is not set in Whitehole??
+        0, // dataSize starts at zero
+        fileName,
+        fullName,
+    };
+
+    parentDir->childrenFiles.push_back(fileEntry);
+    fileEntries.insert(std::make_pair(pathToKey(fullName), fileEntry));
+}
+
+void RarcFile::mvFile(const QString& oldPath, const QString& newPath)
+{
+    std::string oldFile = pathToKey(oldPath);
+    if(!fileExists(oldFile))
+        return;
+
+    FileEntry* fileEntry = fileEntries[oldFile];
+    DirEntry* parent= fileEntry->parentDir;
+
+    QString newFullName = parent->fullName + '/' + newPath;
+    std::string parentKey = pathToKey(newFullName);
+    if(fileExists(parentKey)
+        || directoryExists(parentKey))
+        return; // TODO Whitehole says "temp" here. Why?
+
+    std::string fnKey = pathToKey(fileEntry->fullName);
+    fileEntries.erase(fnKey);
+
+    fileEntry->name = newPath;
+    fileEntry->fullName = newFullName;
+
+    fnKey = pathToKey(fileEntry->fullName);
+    fileEntries.insert(std::make_pair(fnKey, fileEntry));
+}
+
+void RarcFile::rmFile(const QString& filePath)
+{
+    std::string file = pathToKey(filePath);
+    if(!fileExists(file))
+        return;
+
+    FileEntry* fileEntry = fileEntries[file];
+    DirEntry* parent = fileEntry->parentDir;
+
+    // I wish this were easier in C++ :weary:
+    for(int i = 0; i < parent->childrenFiles.size(); i++)
+    {
+        if(parent->childrenFiles[i] == fileEntry)
+        {
+            parent->childrenFiles.erase(parent->childrenFiles.begin() + i);
+            break;
+        }
+    }
+
+    fileEntries.erase(file);
+}
+
+FileBase* RarcFile::openFile(const QString& filePath)
+{
+    if(!fileExists(pathToKey(filePath)))
+        return nullptr; // TODO error?
+
+    return new InRarcFile(this, filePath);
+}
+
+QByteArray RarcFile::getFileContents(const QString& filePath)
+{
+    FileEntry* fileEntry = fileEntries[pathToKey(filePath)];
+
+    if(fileEntry->data != nullptr)
+        return fileEntry->data;
+
+    file->position(fileEntry->dataOffset);
+    return file->readBytes(fileEntry->dataSize); // TODO should we set fileEntry->data?
+}
+
+void RarcFile::reinsertFile(const InRarcFile& file)
+{
+    FileEntry* fileEntry = fileEntries[pathToKey(file.m_fullName)];
+    fileEntry->data = file.getContents();
+    fileEntry->dataSize = file.getLength(); // TODO maybe unnecessary, could use data length directly
+}
+
 
 std::string RarcFile::pathToKey(const QString& path)
 {

@@ -9,6 +9,6 @@ public:
 
     MemoryFile(QByteArray buffer);
 
-    void save() override;
-    void close() override;
+    virtual void save() override;
+    virtual void close() override;
 };

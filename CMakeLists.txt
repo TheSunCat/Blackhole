@@ -18,6 +18,7 @@ set(blackhole_SRC
   include/ui/GalaxyEditorForm.h
 
   src/main.cpp
+  src/Util.cpp
   src/ui/Blackhole.cpp
   src/ui/AboutForm.cpp
   src/ui/GalaxyEditorForm.cpp
@@ -26,6 +27,7 @@ set(blackhole_SRC
   src/io/ExternalFile.cpp
   src/io/MemoryFile.cpp
   src/io/RarcFile.cpp
+  src/io/InRarcFile.cpp
   src/io/BcsvFile.cpp
   src/io/Yaz0File.cpp
   src/smg/Galaxy.cpp

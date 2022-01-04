@@ -6,6 +6,7 @@
 #include <string>
 
 #include "FileBase.h"
+class InRarcFile;
 
 class QStringList;
 
@@ -60,17 +61,21 @@ public:
     void close();
 
     QStringList getSubDirectories(const QString& dirName);
+    bool directoryExists(const std::string& dirName);
     bool directoryExists(const QString& dirName);
     void mkDir(const QString& parent, const QString& dirName);
     void mvDir(const QString& oldName, const QString& newName);
     void rmDir(const QString& dirName);
 
 
-    QStringList getFiles();
-    bool fileExists(const QString& fileName);
-    void mkFile(const QString& fileName);
-    void mvFile(const QString& fileName, const QString& destination);
-    void rmFile(const QString& fileName);
+    QStringList getFiles(const QString& dirName);
+    bool fileExists(const std::string& filePath);
+    bool fileExists(const QString& filePath);
+    void mkFile(const QString& dirName, const QString& fileName);
+    void mvFile(const QString& oldPath, const QString& newPath);
+    void rmFile(const QString& filePath);
 
-    FileBase* openFile(QString filename);
+    FileBase* openFile(const QString& filePath);
+    QByteArray getFileContents(const QString& filePath);
+    void reinsertFile(const InRarcFile& file);
 };

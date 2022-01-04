@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QListWidget>
 
+QDir Blackhole::m_gameDir;
 
 Blackhole::Blackhole(QWidget *parent) :
     QMainWindow(parent), m_ui(new Ui::Blackhole)

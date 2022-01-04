@@ -1,6 +1,6 @@
 #include "io/ExternalFile.h"
 
-ExternalFile::ExternalFile(QString filePath)
+ExternalFile::ExternalFile(const QString& filePath)
         : m_filePath(filePath), m_file(m_filePath)
 {
     // don't open automatically so as to allow Dolphin to work

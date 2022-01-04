@@ -21,7 +21,7 @@ public:
     explicit Blackhole(QWidget *parent = nullptr);
     ~Blackhole() override;
 
-    QDir m_gameDir;
+    static QDir m_gameDir;
     int m_gameType = 0;
 
 private:

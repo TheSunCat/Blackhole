@@ -1,10 +1,11 @@
 #include "smg/Galaxy.h"
 
 #include "io/RarcFile.h"
+#include "Util.h"
 
 Galaxy::Galaxy(QString galaxyName) : name(galaxyName)
 {
-    RarcFile scenario("StageData/" + name + '/' + name + "Scenario.arc");
+    RarcFile scenario(absolutePath("StageData/" + name + '/' + name + "Scenario.arc"));
     BcsvFile zonesBcsv(scenario.openFile('/' + name + "Scenario/ZoneList.bcsv"));
 
     for(const BcsvFile::Entry& entry : zonesBcsv.entries)

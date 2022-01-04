@@ -1,6 +1,11 @@
 #pragma once
 
 #include <vector>
+#include <string>
+#include <QString>
+#include <QDir>
+
+#include "ui/Blackhole.h"
 
 // TODO this looks horrid. is there a better way?
 template<class T>
@@ -27,3 +32,5 @@ public:
         return *m_it;
     }
 };
+
+QString absolutePath(const QString& gamePath);
