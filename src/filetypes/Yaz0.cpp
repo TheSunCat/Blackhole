@@ -88,7 +88,7 @@ QByteArray Yaz0::compress(QByteArray data)
 
                 if(occ.offset != -1)
                 {
-                    uint32_t disp = inPos - occ.offset - 1; // TODO parens
+                    uint32_t disp = (inPos - occ.offset) - 1;
                     assert(disp <= 4095); // TODO throw RuntimeException DISP OUT OF RANGE!
 
                     if(occ.length > 17)
@@ -114,10 +114,9 @@ QByteArray Yaz0::compress(QByteArray data)
                     block |= 0x01;
                 }
 
-                if(occ.offset != -2) // TODO can I just do occ = next?
+                if(occ.offset != -2)
                 {
-                    occ.offset = next.offset;
-                    occ.length = next.length;
+                    occ = next;
                 }
             }
         }

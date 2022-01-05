@@ -4,6 +4,7 @@
 #include <QScopedPointer>
 
 #include "smg/Galaxy.h"
+#include "smg/Zone.h"
 
 namespace Ui
 {
@@ -23,4 +24,5 @@ private:
     QScopedPointer<Ui::GalaxyEditorForm> m_ui;
 
     Galaxy m_galaxy;
+    std::vector<Zone> m_zones;
 };

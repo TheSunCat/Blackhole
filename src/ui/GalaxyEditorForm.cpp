@@ -7,7 +7,7 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
     QDialog(parent), m_ui(new Ui::GalaxyEditorForm), m_galaxy(galaxyName)
 {
     m_ui->setupUi(this);
-    setWindowTitle(QString::fromStdString(blackholeName) + " - Editing " + m_galaxy.name);
+    setWindowTitle(QString::fromStdString(blackholeName) + " - Editing " + m_galaxy.m_name);
 
 }
 

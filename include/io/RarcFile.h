@@ -5,9 +5,9 @@
 #include <vector>
 #include <string>
 
-#include "FileBase.h"
-class InRarcFile;
+#include "BaseFile.h"
 
+class InRarcFile;
 class QStringList;
 
 class RarcFile
@@ -19,7 +19,7 @@ class RarcFile
 
 
     QString m_filePath;
-    FileBase* file;
+    BaseFile* file;
 
     uint32_t m_unk38;
 
@@ -55,6 +55,8 @@ class RarcFile
     std::unordered_map<std::string, FileEntry*> fileEntries;
 
 public:
+    RarcFile() = default;
+
     RarcFile(const QString& rarcFilePath);
 
     void save();
@@ -75,7 +77,7 @@ public:
     void mvFile(const QString& oldPath, const QString& newPath);
     void rmFile(const QString& filePath);
 
-    FileBase* openFile(const QString& filePath);
+    BaseFile* openFile(const QString& filePath);
     QByteArray getFileContents(const QString& filePath);
     void reinsertFile(const InRarcFile& file);
 };

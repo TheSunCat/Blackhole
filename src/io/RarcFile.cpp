@@ -37,7 +37,7 @@ RarcFile::RarcFile(const QString& rarcFilePath) : m_filePath(rarcFilePath)
     uint16_t rnOffset = file->readShort();
 
     file->position(stringTableOffset + rnOffset);
-    root->name = file->readString(); // TODO ASCII
+    root->name = file->readString(0, "ASCII");
     root->fullName = '/' + root->name;
     root->tempID = 0;
 
@@ -71,7 +71,7 @@ RarcFile::RarcFile(const QString& rarcFilePath) : m_filePath(rarcFilePath)
             uint32_t dataSize = file->readInt();
 
             file->position(stringTableOffset + nameOffset);
-            QString name = file->readString(); // TODO ASCII
+            QString name = file->readString(0, "ASCII");
             if(name == "." || name == "..")
                 continue;
 
@@ -161,8 +161,8 @@ void RarcFile::save()
     file->writeInt(0x00000000); // TODO we should skip here
 
     file->position(stringOffset);
-    file->writeString("."); // TODO ASCII
-    file->writeString(".."); // TODO ASCII
+    file->writeString(".", "ASCII");
+    file->writeString("..", "ASCII");
     stringSubOffset += 0x5;
 
     std::stack<Iterator<DirEntry*>> dirStack;
@@ -198,7 +198,7 @@ void RarcFile::save()
         }
 
         file->position(stringOffset + stringSubOffset);
-        stringSubOffset += file->writeString(curDir->name); // TODO ASCII
+        stringSubOffset += file->writeString(curDir->name, "ASCII");
 
         // write the child file & dir entries
         file->position(fileOffset + fileSubOffset);
@@ -230,7 +230,7 @@ void RarcFile::save()
             fileID++;
 
             file->position(stringOffset + stringSubOffset);
-            stringSubOffset += file->writeString(fileEntry->name); // TODO ASCII
+            stringSubOffset += file->writeString(fileEntry->name, "ASCII");
 
             file->position(dataOffset + dataSubOffset);
             fileEntry->dataOffset = file->position();
@@ -481,7 +481,7 @@ void RarcFile::rmFile(const QString& filePath)
     fileEntries.erase(file);
 }
 
-FileBase* RarcFile::openFile(const QString& filePath)
+BaseFile* RarcFile::openFile(const QString& filePath)
 {
     if(!fileExists(filePath))
         return nullptr; // TODO error?

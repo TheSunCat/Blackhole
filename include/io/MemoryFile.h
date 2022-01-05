@@ -1,8 +1,8 @@
 #pragma once
 
-#include "FileBase.h"
+#include "BaseFile.h"
 
-class MemoryFile : public FileBase
+class MemoryFile : public BaseFile
 {
 public:
     MemoryFile() = default;

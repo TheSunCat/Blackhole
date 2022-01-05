@@ -2,7 +2,7 @@
 
 #include <QHash>
 
-BcsvFile::BcsvFile(FileBase* inRarcFile) : file(inRarcFile)
+BcsvFile::BcsvFile(BaseFile* inRarcFile) : file(inRarcFile)
 {
     uint32_t entryCount = file->readInt();
     uint32_t fieldCount = file->readInt();
@@ -37,25 +37,31 @@ BcsvFile::BcsvFile(FileBase* inRarcFile) : file(inRarcFile)
             switch(field.type) {
                 case 0:
                 case 3:
+                {
                     val = uint32_t((file->readInt() & field.mask) >> field.shift);
                     break;
-
+                }
                 case 4:
+                {
                     val = uint16_t((file->readShort() & field.mask) >> field.shift);
                     break;
-
+                }
                 case 5:
+                {
                     val = uint8_t((file->readByte() * field.mask) >> field.shift);
                     break;
-
+                }
                 case 6:
+                {
                     int strOffset = file->readInt();
                     file->position(stringTableOffset + strOffset);
-                    val = file->readString("Shift-JIS"); // TODO shift-JIS
+                    val = file->readString(0, "Shift_JIS");
                     break;
-
-                //default:
-                    // TODO assert(false); // Bcsv: unsupported data type
+                }
+                default:
+                {
+                    assert(false); // Bcsv: unsupported data type
+                }
             }
 
             entry.insert(field.nameHash, val);
@@ -137,7 +143,7 @@ void BcsvFile::save()
             {
                 uint8_t val = file->readShort();
                 val &= ~field.mask;
-                val |= (std::get<uint8_t>(entry[field.nameHash]) << field.shift) & field.mask;
+                val |= (entry[field.nameHash] << field.shift) & field.mask;
 
                 file->position(valOffset);
                 file->writeByte(val);
@@ -145,7 +151,7 @@ void BcsvFile::save()
             }
             case 2:
             {
-                file->writeFloat(std::get<float>(entry[field.nameHash]));
+                file->writeFloat(entry[field.nameHash]);
                 break;
             }
             case 6:
@@ -160,7 +166,7 @@ void BcsvFile::save()
                     stringOffsets[val] = curString;
                     file->writeInt(curString);
                     file->position(stringTableOffset + curString);
-                    curString += file->writeString(val, "Shift_JIS"); // TODO SJIS
+                    curString += file->writeString(val, "Shift_JIS");
                 }
 
                 break;
@@ -186,7 +192,7 @@ void BcsvFile::close()
     file->close();
 }
 
-BcsvFile::Field BcsvFile::addField(const QString& name, uint32_t mask, uint16_t offset, uint8_t shift, uint8_t type,  Value defaultValue)
+BcsvFile::Field BcsvFile::addField(const QString& name, uint32_t mask, uint16_t offset, uint8_t shift, uint8_t type, Value defaultValue)
 {
     addHash(name); // nyeh heh heh
 
@@ -236,14 +242,14 @@ void BcsvFile::removeField(const QString& name)
 
 
 
-BcsvFile::Value BcsvFile::Entry::operator[](const QString& key) const
+BcsvFile::_ValueProxy BcsvFile::Entry::operator[](const QString& key) const
 {
-    return m_entry.at(BcsvFile::fieldNameToHash(key));
+    return operator[](BcsvFile::fieldNameToHash(key));
 }
 
-BcsvFile::Value BcsvFile::Entry::operator[](uint32_t key) const
+BcsvFile::_ValueProxy BcsvFile::Entry::operator[](uint32_t key) const
 {
-    return m_entry.at(key);
+    return _ValueProxy{m_entry.at(key)};
 }
 
 bool BcsvFile::Entry::contains(const QString& key) const
@@ -254,15 +260,15 @@ bool BcsvFile::Entry::contains(const QString& key) const
     return loc != m_entry.end();
 }
 
-BcsvFile::Value BcsvFile::Entry::get(const QString& key, const BcsvFile::Value& defaultValue) const
+BcsvFile::_ValueProxy BcsvFile::Entry::get(const QString& key, BcsvFile::Value defaultValue) const
 {
     uint32_t hash = fieldNameToHash(key);
     auto loc = m_entry.find(hash);
 
     if(loc != m_entry.end())
-        return loc->second;
+        return _ValueProxy{loc->second};
 
-    return defaultValue;
+    return _ValueProxy{defaultValue};
 }
 
 void BcsvFile::Entry::insert(const QString& key, const BcsvFile::Value& val)

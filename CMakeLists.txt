@@ -9,7 +9,6 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-# Find the QtWidgets library
 find_package(Qt5Widgets CONFIG REQUIRED)
 
 set(blackhole_SRC
@@ -19,24 +18,31 @@ set(blackhole_SRC
 
   src/main.cpp
   src/Util.cpp
+
   src/ui/Blackhole.cpp
   src/ui/AboutForm.cpp
   src/ui/GalaxyEditorForm.cpp
+
   src/filetypes/Yaz0.cpp
-  src/io/FileBase.cpp
+
+  src/io/BaseFile.cpp
   src/io/ExternalFile.cpp
   src/io/MemoryFile.cpp
   src/io/RarcFile.cpp
   src/io/InRarcFile.cpp
   src/io/BcsvFile.cpp
   src/io/Yaz0File.cpp
+
   src/smg/Galaxy.cpp
+  src/smg/Zone.cpp
+  src/smg/BaseObject.cpp
+  src/smg/ZoneObject.cpp
 )
 
 add_executable(blackhole ${blackhole_SRC})
 target_link_libraries(blackhole Qt5::Widgets)
 
-target_include_directories(blackhole PRIVATE include)
+target_include_directories(blackhole PRIVATE include libs)
 
 # Install the executable
 install(TARGETS blackhole DESTINATION bin)

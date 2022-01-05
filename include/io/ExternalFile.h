@@ -1,10 +1,10 @@
 #pragma once
-#include "io/FileBase.h"
+#include "io/BaseFile.h"
 
 #include <QString>
 #include <QFile>
 
-class ExternalFile : public FileBase
+class ExternalFile : public BaseFile
 {
     QString m_filePath;
 

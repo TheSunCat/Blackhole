@@ -6,7 +6,7 @@
 
 #include <QString>
 
-class FileBase
+class BaseFile
 {
 protected:
     bool m_bigEndian = true;
@@ -20,7 +20,7 @@ public:
     virtual void save() = 0;
     virtual void close() = 0; // without saving!
 
-    // TODO virtual void releaseStorage(); // TODO do we need this?
+    // virtual void releaseStorage(); // TODO do we need this?
 
     virtual void setBigEndian(bool big);
 
@@ -35,7 +35,7 @@ public:
     uint16_t readShort() const;
     uint32_t readInt() const;
     float readFloat() const;
-    QString readString(const char* enc = "ASCII") const;
+    QString readString(uint32_t length, const char* enc = "ASCII") const;
     QByteArray readBytes(uint32_t count) const;
 
     void writeByte(uint8_t val);

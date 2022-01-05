@@ -1,44 +1,45 @@
-#include "io/FileBase.h"
+#include "io/BaseFile.h"
 
 #include <QString>
+#include <QTextCodec>
 
-void FileBase::setBigEndian(bool big)
+void BaseFile::setBigEndian(bool big)
 {
     m_bigEndian = big;
 }
 
-uint32_t FileBase::position() const
+uint32_t BaseFile::position() const
 {
     return m_curPos;
 }
 
-void FileBase::position(uint32_t newPos)
+void BaseFile::position(uint32_t newPos)
 {
     m_curPos = newPos;
 }
 
-void FileBase::skip(uint32_t count)
+void BaseFile::skip(uint32_t count)
 {
     m_curPos += count;
 }
 
-uint32_t FileBase::getLength() const
+uint32_t BaseFile::getLength() const
 {
     return m_contents.size();
 }
 
-void FileBase::setLength(uint32_t length)
+void BaseFile::setLength(uint32_t length)
 {
     m_contents.resize(length);
 }
 
 
-uint8_t FileBase::readByte() const
+uint8_t BaseFile::readByte() const
 {
     return m_contents[m_curPos++]; // post-increment
 }
 
-uint16_t FileBase::readShort() const
+uint16_t BaseFile::readShort() const
 {
     uint16_t ret = 0;
 
@@ -56,7 +57,7 @@ uint16_t FileBase::readShort() const
     return ret;
 }
 
-uint32_t FileBase::readInt() const
+uint32_t BaseFile::readInt() const
 {
     uint32_t ret = 0;
 
@@ -78,7 +79,7 @@ uint32_t FileBase::readInt() const
     return ret;
 }
 
-float FileBase::readFloat() const
+float BaseFile::readFloat() const
 {
     // oh boy
     float ret;
@@ -102,23 +103,30 @@ float FileBase::readFloat() const
     return ret;
 }
 
-#include <QTextCodec>
-QString FileBase::readString(const char* enc) const
+QString BaseFile::readString(uint32_t length, const char* enc) const
 {
     QByteArray bytes;
-
-    while(m_contents[m_curPos] != '\0') // could check if we reached EOF, but this shouldn't happen
+    for(int i = 0; i < length || length == 0; i++)
     {
-        // TODO some encs might be multi-byte, such as SJIS
-        bytes.push_back(readByte());
+        uint8_t byte = readByte();
+
+        if(length == 0 && byte == 0)
+        {
+            // TODO will this break on multibyte encs like Shift_JIS?
+            break;
+        }
+
+        bytes.push_back(byte);
+
+
     }
 
-    QString data = QTextCodec::codecForName(enc)->toUnicode(bytes);
 
-    return data;
+    QTextDecoder* dc = QTextCodec::codecForName(enc)->makeDecoder();
+    return dc->toUnicode(bytes);
 }
 
-QByteArray FileBase::readBytes(uint32_t count) const
+QByteArray BaseFile::readBytes(uint32_t count) const
 {
     QByteArray ret(count, 0);
 
@@ -128,7 +136,7 @@ QByteArray FileBase::readBytes(uint32_t count) const
     return ret;
 }
 
-void FileBase::writeByte(uint8_t val)
+void BaseFile::writeByte(uint8_t val)
 {
     uint8_t oldVal = m_contents[m_curPos];
 
@@ -138,7 +146,7 @@ void FileBase::writeByte(uint8_t val)
         m_modifiedFlag = true;
 }
 
-void FileBase::writeShort(uint16_t val)
+void BaseFile::writeShort(uint16_t val)
 {
     if(m_bigEndian)
     {
@@ -152,7 +160,7 @@ void FileBase::writeShort(uint16_t val)
     }
 }
 
-void FileBase::writeInt(uint32_t val)
+void BaseFile::writeInt(uint32_t val)
 {
     if(m_bigEndian)
     {
@@ -170,7 +178,7 @@ void FileBase::writeInt(uint32_t val)
     }
 }
 
-void FileBase::writeFloat(float val)
+void BaseFile::writeFloat(float val)
 {
     union U {
         float val;
@@ -196,14 +204,10 @@ void FileBase::writeFloat(float val)
 }
 
 
-int FileBase::writeString(const QString& str, const char* enc)
+int BaseFile::writeString(const QString& str, const char* enc)
 {
-    // TODO no idea if this is right
-
-    auto str16 = str.toStdU16String();
-    const char *begin = reinterpret_cast<char const*>(str16.data());
-
-    QByteArray strBytes(begin, str16.size() * 2);
+    QTextEncoder* en = QTextCodec::codecForName(enc)->makeEncoder();
+    QByteArray strBytes = en->fromUnicode(str);
 
     // not using QByteArray::replace because we want to set m_modifiedFlag
     for(auto& byte : strBytes)
@@ -212,20 +216,18 @@ int FileBase::writeString(const QString& str, const char* enc)
     return strBytes.length();
 }
 
-void FileBase::writeBytes(QByteArray bytes)
+void BaseFile::writeBytes(QByteArray bytes)
 {
     for(auto& byte : bytes)
         writeByte(byte);
 }
 
-
-QByteArray FileBase::getContents() const
+QByteArray BaseFile::getContents() const
 {
     return m_contents;
 }
 
-void FileBase::setContents(QByteArray bytes)
+void BaseFile::setContents(QByteArray bytes)
 {
-    m_contents.clear(); // TODO do I need to clear?
     m_contents = bytes;
 }

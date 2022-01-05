@@ -34,3 +34,5 @@ public:
 };
 
 QString absolutePath(const QString& gamePath);
+
+bool fileExists(const QString& file);

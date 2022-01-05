@@ -30,4 +30,5 @@ void ExternalFile::setLength(uint32_t length)
 {
     // TODO this function does not exist in QFile... do we even need it?
     //m_file.setLength(length);
+    assert(false);
 }

@@ -22,7 +22,7 @@ public:
     ~Blackhole() override;
 
     static QDir m_gameDir;
-    int m_gameType = 0;
+    static int m_gameType;
 
 private:
     QScopedPointer<Ui::Blackhole> m_ui;

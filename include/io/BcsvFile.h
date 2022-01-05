@@ -1,6 +1,6 @@
 #pragma once
 
-#include "io/FileBase.h"
+#include "io/BaseFile.h"
 
 #include <unordered_map>
 #include <vector>
@@ -11,6 +11,10 @@
 class BcsvFile
 {
 public:
+    // ----------------------------
+    // using class as namespace lol
+    // ----------------------------
+
     static uint32_t fieldNameToHash(const QString& fieldName);
     static QString hashToFieldName(uint32_t hash);
     static void addHash(QString field);
@@ -29,15 +33,33 @@ public:
 
     typedef std::variant<uint32_t, uint16_t, uint8_t, float, QString> Value;
 
+    struct _ValueProxy
+    {
+        Value& var;
+
+        operator uint32_t()&&;
+        operator uint16_t()&&;
+        operator uint8_t()&&;
+        operator float()&&;
+        operator QString()&&;
+
+        template<typename T>
+        _ValueProxy operator=(T& other)
+        {
+            var = other;
+        }
+    };
+
     class Entry
     {
         mutable std::unordered_map<uint32_t, Value> m_entry;
 
     public:
-        Value operator[](const QString& key) const;
-        Value operator[](uint32_t key) const;
 
-        Value get(const QString& key, const Value& defaultValue) const;
+        _ValueProxy operator[](const QString& key) const;
+        _ValueProxy operator[](uint32_t key) const;
+
+        _ValueProxy get(const QString& key, Value defaultValue) const;
 
         void insert(const QString& key, const Value& val);
         void insert(uint32_t key, const Value& val);
@@ -56,10 +78,10 @@ private:
     // actual class starts here
     // ------------------------
 
-    FileBase* file;
+    BaseFile* file;
 
 public:
-    BcsvFile(FileBase* inRarcFile);
+    BcsvFile(BaseFile* inRarcFile);
 
     void save();
     void close();

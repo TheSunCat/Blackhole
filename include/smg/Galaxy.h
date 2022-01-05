@@ -9,7 +9,7 @@ struct Galaxy
 {
     Galaxy(QString galaxyName);
 
-    QString name;
-    std::vector<QString> zoneList;
-    std::vector<BcsvFile::Entry> scenarioData;
+    QString m_name;
+    std::vector<QString> m_zoneList;
+    std::vector<BcsvFile::Entry> m_scenarioData;
 };

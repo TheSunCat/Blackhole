@@ -14,5 +14,4 @@ void MemoryFile::save()
 void MemoryFile::close()
 {
     // implemented in subclasses
-    //assert(false);
 }

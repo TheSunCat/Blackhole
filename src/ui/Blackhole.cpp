@@ -10,6 +10,7 @@
 #include <QListWidget>
 
 QDir Blackhole::m_gameDir;
+int Blackhole::m_gameType = 0;
 
 Blackhole::Blackhole(QWidget *parent) :
     QMainWindow(parent), m_ui(new Ui::Blackhole)
