@@ -4,7 +4,7 @@
 
 #include <QByteArray>
 
-class QString;
+#include <QString>
 
 class FileBase
 {
@@ -35,14 +35,14 @@ public:
     uint16_t readShort() const;
     uint32_t readInt() const;
     float readFloat() const;
-    QString readString() const;
+    QString readString(const char* enc = "ASCII") const;
     QByteArray readBytes(uint32_t count) const;
 
     void writeByte(uint8_t val);
     void writeShort(uint16_t val);
     void writeInt(uint32_t val);
     void writeFloat(float val);
-    int writeString(QString str); // TODO should we assume UTF-16 encoding?
+    int writeString(const QString& str, const char* enc = "ASCII");
     void writeBytes(QByteArray bytes);
 
     virtual QByteArray getContents() const;

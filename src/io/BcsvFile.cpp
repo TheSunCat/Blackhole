@@ -51,7 +51,7 @@ BcsvFile::BcsvFile(FileBase* inRarcFile) : file(inRarcFile)
                 case 6:
                     int strOffset = file->readInt();
                     file->position(stringTableOffset + strOffset);
-                    val = file->readString(); // TODO shift-JIS
+                    val = file->readString("Shift-JIS"); // TODO shift-JIS
                     break;
 
                 //default:
@@ -160,7 +160,7 @@ void BcsvFile::save()
                     stringOffsets[val] = curString;
                     file->writeInt(curString);
                     file->position(stringTableOffset + curString);
-                    curString += file->writeString(val); // TODO SJIS
+                    curString += file->writeString(val, "Shift_JIS"); // TODO SJIS
                 }
 
                 break;

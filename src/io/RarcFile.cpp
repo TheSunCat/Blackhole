@@ -483,7 +483,7 @@ void RarcFile::rmFile(const QString& filePath)
 
 FileBase* RarcFile::openFile(const QString& filePath)
 {
-    if(!fileExists(pathToKey(filePath)))
+    if(!fileExists(filePath))
         return nullptr; // TODO error?
 
     return new InRarcFile(this, filePath);

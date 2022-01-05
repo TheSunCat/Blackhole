@@ -33,13 +33,9 @@ set(blackhole_SRC
   src/smg/Galaxy.cpp
 )
 
-# Tell CMake to create the helloworld executable
 add_executable(blackhole ${blackhole_SRC})
-
-# Use the Widgets module from Qt 5.
 target_link_libraries(blackhole Qt5::Widgets)
 
-# Add include directory
 target_include_directories(blackhole PRIVATE include)
 
 # Install the executable

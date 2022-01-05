@@ -102,18 +102,20 @@ float FileBase::readFloat() const
     return ret;
 }
 
-#include <sstream>
-QString FileBase::readString() const
+#include <QTextCodec>
+QString FileBase::readString(const char* enc) const
 {
-    std::wstringstream ret;
-    ret.imbue(std::locale(".932"));
+    QByteArray bytes;
 
-    while(m_contents[m_curPos] != '\0')
+    while(m_contents[m_curPos] != '\0') // could check if we reached EOF, but this shouldn't happen
     {
-        ret << readByte(); // TODO fix
+        // TODO some encs might be multi-byte, such as SJIS
+        bytes.push_back(readByte());
     }
 
-    return QString::fromStdWString(ret.str());
+    QString data = QTextCodec::codecForName(enc)->toUnicode(bytes);
+
+    return data;
 }
 
 QByteArray FileBase::readBytes(uint32_t count) const
@@ -194,7 +196,7 @@ void FileBase::writeFloat(float val)
 }
 
 
-int FileBase::writeString(QString str)
+int FileBase::writeString(const QString& str, const char* enc)
 {
     // TODO no idea if this is right
 
