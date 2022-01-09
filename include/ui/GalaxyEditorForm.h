@@ -2,6 +2,8 @@
 
 #include <QDialog>
 #include <QScopedPointer>
+#include <QString>
+#include <string>
 
 #include "smg/Galaxy.h"
 #include "smg/Zone.h"
@@ -25,6 +27,8 @@ private:
     QScopedPointer<Ui::GalaxyEditorForm> m_ui;
 
     Galaxy m_galaxy;
-    std::vector<Zone> m_zones;
-    std::vector<BaseObject*> m_allObects;
+    std::unordered_map<std::string, Zone> m_zones;
+
+    std::vector<BaseObject*> m_objects;
+    std::unordered_map<std::string, ZoneObject*> m_zoneObjects;
 };

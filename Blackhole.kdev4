@@ -1,3 +1,4 @@
 [Project]
-Name=Blackhole
+CreatedFrom=CMakeLists.txt
 Manager=KDevCMakeManager
+Name=Blackhole

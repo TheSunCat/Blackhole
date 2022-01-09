@@ -1,7 +1,8 @@
 #include "ui/GalaxyEditorForm.h"
 #include "ui_GalaxyEditorForm.h"
 
-#include <ui/Blackhole.h>
+#include "ui/Blackhole.h"
+#include "smg/ZoneObject.h"
 
 GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
     QDialog(parent), m_ui(new Ui::GalaxyEditorForm), m_galaxy(galaxyName)
@@ -13,7 +14,37 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
     {
         // load the zone
         Zone zone = m_galaxy.openZone(zoneName);
-        z_zones.push_back(zone);
+        m_zones.insert(std::make_pair(zoneName.toStdString(), zone));
+
+        // add all objects from this zone
+        for(const auto& [ layer, objectList ] : zone.m_objects)
+        {
+            for(BaseObject* object : objectList) {
+                // TODO do I need maxUniqueID?
+                m_objects.push_back(object);
+            }
+        }
+
+        // TODO add paths from m_paths
+    }
+
+    Zone mainZone = m_zones[galaxyName.toStdString()];
+    for(int i = 0; i < m_galaxy.m_scenarioData.size(); i++)
+    {
+        // add subzones of the main zone
+        if(mainZone.m_zones.find("common") != mainZone.m_zones.end())
+        {
+            for(ZoneObject* subZone : mainZone.m_zones["common"])
+            {
+                QString key = i + '/' + subZone->m_name;
+
+                assert(m_zoneObjects.find(key.toStdString()) != m_zoneObjects.end()); // duplicate zone
+
+                m_zoneObjects.insert(std::make_pair(key.toStdString(), subZone));
+            }
+        }
+
+
     }
 }
 
