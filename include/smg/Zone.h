@@ -4,9 +4,9 @@
 #include <vector>
 #include <string>
 
-#include "smg/Galaxy.h"
 #include "io/RarcFile.h"
 
+struct Galaxy;
 class BaseObject;
 class ZoneObject;
 class PathObject;

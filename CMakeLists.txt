@@ -43,6 +43,7 @@ add_executable(blackhole ${blackhole_SRC})
 target_link_libraries(blackhole Qt5::Widgets)
 
 target_include_directories(blackhole PRIVATE include libs)
+set_property(TARGET blackhole PROPERTY CXX_STANDARD 23)
 
 # Install the executable
 install(TARGETS blackhole DESTINATION bin)

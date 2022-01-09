@@ -5,6 +5,7 @@
 
 #include "smg/Galaxy.h"
 #include "smg/Zone.h"
+#include "smg/BaseObject.h"
 
 namespace Ui
 {
@@ -25,4 +26,5 @@ private:
 
     Galaxy m_galaxy;
     std::vector<Zone> m_zones;
+    std::vector<BaseObject*> m_allObects;
 };

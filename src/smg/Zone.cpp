@@ -1,13 +1,14 @@
 #include "smg/Zone.h"
 
 #include "Util.h"
+#include "io/BcsvFile.h"
 
 Zone::Zone(Galaxy* parent, const QString& name) : m_galaxy(parent), m_zoneName(name)
 {
     if(Blackhole::m_gameType == 1)
-        m_zoneFileName = "/StageData/" + m_zoneName + ".arc";
+        m_zoneFileName = "StageData/" + m_zoneName + ".arc";
     if(Blackhole::m_gameType == 2)
-        m_zoneFileName = "/StageData/" + m_zoneName + '/' + m_zoneName + ".arc";
+        m_zoneFileName = "StageData/" + m_zoneName + '/' + m_zoneName + "Map.arc";
 
     m_map = RarcFile(absolutePath(m_zoneFileName));
     loadObjects("Placement", "StageObjInfo");
@@ -33,29 +34,3 @@ void Zone::loadObjects(const QString& dir, const QString& file)
 
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

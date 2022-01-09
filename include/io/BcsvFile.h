@@ -2,7 +2,6 @@
 
 #include "io/BaseFile.h"
 
-#include <unordered_map>
 #include <vector>
 #include <variant>
 #include <QString>
@@ -33,33 +32,27 @@ public:
 
     typedef std::variant<uint32_t, uint16_t, uint8_t, float, QString> Value;
 
-    struct _ValueProxy
-    {
-        Value& var;
-
-        operator uint32_t()&&;
-        operator uint16_t()&&;
-        operator uint8_t()&&;
-        operator float()&&;
-        operator QString()&&;
-
-        template<typename T>
-        _ValueProxy operator=(T& other)
-        {
-            var = other;
-        }
-    };
-
     class Entry
     {
         mutable std::unordered_map<uint32_t, Value> m_entry;
 
     public:
 
-        _ValueProxy operator[](const QString& key) const;
-        _ValueProxy operator[](uint32_t key) const;
+        Value operator[](const QString& key) const;
+        Value operator[](uint32_t key) const;
 
-        _ValueProxy get(const QString& key, Value defaultValue) const;
+        Value get(const QString& key, Value defaultValue) const;
+        Value get(uint32_t key, Value defaultValue) const;
+        uint32_t geti(const QString& key, uint32_t defaultValue = 0) const;
+        uint32_t geti(uint32_t key, uint32_t defaultValue = 0) const;
+        uint16_t gets(const QString& key, uint16_t defaultValue = 0) const;
+        uint16_t gets(uint32_t key, uint16_t defaultValue = 0) const;
+        uint8_t getb(const QString& key, uint8_t defaultValue = 0) const;
+        uint8_t getb(uint32_t key, uint8_t defaultValue = 0) const;
+        float getf(const QString& key, float defaultValue = 0) const;
+        float getf(uint32_t key, float defaultValue = 0) const;
+        QString getstr(const QString& key, const QString& defaultValue = "") const;
+        QString getstr(uint32_t key, const QString& defaultValue = "") const;
 
         void insert(const QString& key, const Value& val);
         void insert(uint32_t key, const Value& val);
@@ -90,6 +83,6 @@ public:
 
     void removeField(const QString& name);
 
-    std::unordered_map<uint32_t, Field> fields;
-    std::vector<Entry> entries;
+    std::vector<Field> m_fields;
+    std::vector<Entry> m_entries;
 };

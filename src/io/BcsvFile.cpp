@@ -13,6 +13,8 @@ BcsvFile::BcsvFile(BaseFile* inRarcFile) : file(inRarcFile)
 
     for(int i = 0; i < fieldCount; i++)
     {
+        file->position(0x10 + 0xC * i);
+
         Field field {
             file->readInt(),   // nameHash
             file->readInt(),   // mask
@@ -22,14 +24,14 @@ BcsvFile::BcsvFile(BaseFile* inRarcFile) : file(inRarcFile)
             BcsvFile::hashToFieldName(field.nameHash)
         };
 
-        fields.insert(std::make_pair(field.nameHash, field));
+        m_fields.push_back(field);
     }
 
     for(int i = 0; i < entryCount; i++)
     {
         Entry entry;
 
-        for(const auto& [ nameHash, field ] : fields)
+        for(const Field& field : m_fields)
         {
             file->position(dataOffset + (i * entryDataSize) + field.entryOffset);
 
@@ -51,6 +53,11 @@ BcsvFile::BcsvFile(BaseFile* inRarcFile) : file(inRarcFile)
                     val = uint8_t((file->readByte() * field.mask) >> field.shift);
                     break;
                 }
+                case 2:
+                {
+                    val = file->readFloat();
+                    break;
+                }
                 case 6:
                 {
                     int strOffset = file->readInt();
@@ -67,7 +74,7 @@ BcsvFile::BcsvFile(BaseFile* inRarcFile) : file(inRarcFile)
             entry.insert(field.nameHash, val);
         }
 
-        entries.emplace_back(entry);
+        m_entries.emplace_back(entry);
     }
 }
 
@@ -76,7 +83,7 @@ void BcsvFile::save()
     uint32_t entrySize = 0;
 
     // grow entrySize to the largest field's size
-    for(const auto& [key, field] : fields)
+    for(const Field& field : m_fields)
     {
         uint16_t fieldEnd = field.entryOffset + Field::dataSizes[field.type];
 
@@ -86,18 +93,18 @@ void BcsvFile::save()
 
     entrySize = (entrySize + 3) & ~3; // TODO simplify this in bin. why is it written this way?
 
-    uint32_t dataOffset = 0x10 + (0xC * fields.size());
-    uint32_t stringTableOffset = dataOffset + (entrySize * entries.size());
+    uint32_t dataOffset = 0x10 + (0xC * m_fields.size());
+    uint32_t stringTableOffset = dataOffset + (entrySize * m_entries.size());
 
     uint32_t curString = 0;
 
     file->setLength(stringTableOffset);
-    file->writeInt(entries.size());
-    file->writeInt(fields.size());
+    file->writeInt(m_entries.size());
+    file->writeInt(m_fields.size());
     file->writeInt(dataOffset);
     file->writeInt(entrySize);
 
-    for(const auto& [key, field] : fields)
+    for(const Field& field : m_fields)
     {
         file->writeInt(field.nameHash);
         file->writeInt(field.mask);
@@ -109,9 +116,9 @@ void BcsvFile::save()
     int i = 0;
     std::unordered_map<QString, int> stringOffsets;
 
-    for(const Entry& entry : entries)
+    for(const Entry& entry : m_entries)
     {
-        for(const auto& [nameHash, field] : fields)
+        for(const Field& field : m_fields)
         {
             uint32_t valOffset = dataOffset + (i * entrySize) + field.entryOffset;
             file->position(valOffset);
@@ -143,7 +150,7 @@ void BcsvFile::save()
             {
                 uint8_t val = file->readShort();
                 val &= ~field.mask;
-                val |= (entry[field.nameHash] << field.shift) & field.mask;
+                val |= (entry.gets(field.nameHash) << field.shift) & field.mask;
 
                 file->position(valOffset);
                 file->writeByte(val);
@@ -151,7 +158,7 @@ void BcsvFile::save()
             }
             case 2:
             {
-                file->writeFloat(entry[field.nameHash]);
+                file->writeFloat(entry.getf(field.nameHash));
                 break;
             }
             case 6:
@@ -204,7 +211,7 @@ BcsvFile::Field BcsvFile::addField(const QString& name, uint32_t mask, uint16_t 
 
     if(offset == MAX_U16)
     {
-        for(const auto& [nameHash, field]: fields)
+        for(const Field& field : m_fields)
         {
             uint16_t fieldEnd = field.entryOffset + Field::dataSizes[field.type];
 
@@ -222,9 +229,9 @@ BcsvFile::Field BcsvFile::addField(const QString& name, uint32_t mask, uint16_t 
         name
     };
 
-    fields[newField.nameHash] = newField;
+    m_fields.push_back(newField);
 
-    for(Entry& entry : entries)
+    for(Entry& entry : m_entries)
         entry[name] = defaultValue;
 
     return newField;
@@ -233,23 +240,24 @@ BcsvFile::Field BcsvFile::addField(const QString& name, uint32_t mask, uint16_t 
 void BcsvFile::removeField(const QString& name)
 {
     uint32_t hash = fieldNameToHash(name);
-    fields.erase(hash);
 
-    for(Entry& entry : entries)
+    // delete the field with this hash
+    std::erase_if(m_fields, [&](const Field& f) { return f.nameHash == hash;});
+
+    for(Entry& entry : m_entries)
         entry.erase(hash);
 }
 
 
 
-
-BcsvFile::_ValueProxy BcsvFile::Entry::operator[](const QString& key) const
+BcsvFile::Value BcsvFile::Entry::operator[](const QString& key) const
 {
     return operator[](BcsvFile::fieldNameToHash(key));
 }
 
-BcsvFile::_ValueProxy BcsvFile::Entry::operator[](uint32_t key) const
+BcsvFile::Value BcsvFile::Entry::operator[](uint32_t key) const
 {
-    return _ValueProxy{m_entry.at(key)};
+    return m_entry.at(key);
 }
 
 bool BcsvFile::Entry::contains(const QString& key) const
@@ -260,23 +268,77 @@ bool BcsvFile::Entry::contains(const QString& key) const
     return loc != m_entry.end();
 }
 
-BcsvFile::_ValueProxy BcsvFile::Entry::get(const QString& key, BcsvFile::Value defaultValue) const
+BcsvFile::Value BcsvFile::Entry::get(const QString& key, BcsvFile::Value defaultValue) const
 {
-    uint32_t hash = fieldNameToHash(key);
-    auto loc = m_entry.find(hash);
-
-    if(loc != m_entry.end())
-        return _ValueProxy{loc->second};
-
-    return _ValueProxy{defaultValue};
+    return get(fieldNameToHash(key), defaultValue);
 }
 
-void BcsvFile::Entry::insert(const QString& key, const BcsvFile::Value& val)
+BcsvFile::Value BcsvFile::Entry::get(uint32_t key, BcsvFile::Value defaultValue) const
+{
+    auto loc = m_entry.find(key);
+
+    if(loc != m_entry.end())
+        return loc->second;
+
+    return defaultValue;
+}
+
+uint32_t BcsvFile::Entry::geti(const QString& key, uint32_t defaultValue) const
+{
+    return std::get<uint32_t>(get(key, Value(defaultValue)));
+}
+
+uint32_t BcsvFile::Entry::geti(uint32_t key, uint32_t defaultValue) const
+{
+    return std::get<uint32_t>(get(key, Value(defaultValue)));
+}
+
+uint16_t BcsvFile::Entry::gets(const QString& key, uint16_t defaultValue) const
+{
+    return std::get<uint16_t>(get(key, Value(defaultValue)));
+}
+
+uint16_t BcsvFile::Entry::gets(uint32_t key, uint16_t defaultValue) const
+{
+    return std::get<uint16_t>(get(key, Value(defaultValue)));
+}
+
+uint8_t BcsvFile::Entry::getb(const QString& key, uint8_t defaultValue) const
+{
+    return std::get<uint8_t>(get(key, Value(defaultValue)));
+}
+
+uint8_t BcsvFile::Entry::getb(uint32_t key, uint8_t defaultValue) const
+{
+    return std::get<uint8_t>(get(key, Value(defaultValue)));
+}
+
+float BcsvFile::Entry::getf(const QString& key, float defaultValue) const
+{
+    return std::get<float>(get(key, Value(defaultValue)));
+}
+
+float BcsvFile::Entry::getf(uint32_t key, float defaultValue) const
+{
+    return std::get<float>(get(key, Value(defaultValue)));
+}
+
+QString BcsvFile::Entry::getstr(const QString& key, const QString& defaultValue) const
+{
+    return std::get<QString>(get(key, Value(defaultValue)));
+}
+
+QString BcsvFile::Entry::getstr(uint32_t key, const QString& defaultValue) const
+{
+    return std::get<QString>(get(key, Value(defaultValue)));
+}
+
+void BcsvFile::Entry::insert(const QString& key, const Value& val)
 {
     m_entry.insert(std::make_pair(fieldNameToHash(key), val));
 }
 
-void BcsvFile::Entry::insert(uint32_t key, const BcsvFile::Value& val)
+void BcsvFile::Entry::insert(uint32_t key, const Value& val)
 {
     m_entry.insert(std::make_pair(key, val));
 }
