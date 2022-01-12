@@ -2,6 +2,7 @@
 
 #include <QString>
 #include <QTextCodec>
+#include <array>
 
 void BaseFile::setBigEndian(bool big)
 {
