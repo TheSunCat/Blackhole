@@ -22,6 +22,7 @@ set(blackhole_SRC
   src/ui/Blackhole.cpp
   src/ui/AboutForm.cpp
   src/ui/GalaxyEditorForm.cpp
+  src/ui/GalaxyRenderer.cpp
 
   src/filetypes/Yaz0.cpp
 

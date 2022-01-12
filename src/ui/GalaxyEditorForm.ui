@@ -15,10 +15,17 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0">
    <item>
-    <widget class="QOpenGLWidget" name="openGLWidget"/>
+    <widget class="GalaxyRenderer" name="openGLWidget"/>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>GalaxyRenderer</class>
+   <extends>QOpenGLWidget</extends>
+   <header location="global">ui/GalaxyRenderer.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

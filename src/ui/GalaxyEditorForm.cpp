@@ -2,6 +2,7 @@
 #include "ui_GalaxyEditorForm.h"
 
 #include <iostream>
+#include <string>
 
 #include "ui/Blackhole.h"
 #include "smg/ZoneObject.h"
@@ -51,7 +52,29 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
             }
         }
 
+        uint32_t mainLayerMask = m_galaxy.m_scenarioData[i].geti(galaxyName);
+        for(char layerID = 0; layerID < 16; layerID++)
+        {
+            if((mainLayerMask & (1 << layerID)) == 0)
+                continue;
 
+            std::string layer = "layer";
+            layer += 'a' + layerID;
+            if(mainZone.m_zones.find(layer) == mainZone.m_zones.end())
+                continue;
+
+            for(ZoneObject* subZone : mainZone.m_zones[layer])
+            {
+                // jank string operations aa
+                QString key; key += i;
+                key += "/" + subZone->m_name;
+
+                if(m_zoneObjects.find(key.toStdString()) == m_zoneObjects.end())
+                    continue; // TODO error duplicate zone
+
+                m_zoneObjects.insert(std::make_pair(key.toStdString(), subZone));
+            }
+        }
     }
 }
 
