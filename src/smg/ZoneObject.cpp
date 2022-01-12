@@ -19,7 +19,6 @@ ZoneObject::ZoneObject(Zone& zone, const QString& dir, const QString& layer, con
         m_data.getf("dir_x")
     );
 
-    // TODO why scl = 1?
     m_scl = glm::vec3(1);
 }
 

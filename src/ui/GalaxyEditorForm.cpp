@@ -1,6 +1,8 @@
 #include "ui/GalaxyEditorForm.h"
 #include "ui_GalaxyEditorForm.h"
 
+#include <iostream>
+
 #include "ui/Blackhole.h"
 #include "smg/ZoneObject.h"
 
@@ -9,6 +11,8 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
 {
     m_ui->setupUi(this);
     setWindowTitle(QString::fromStdString(blackholeName) + " - Editing " + m_galaxy.m_name);
+    std::cout << "Created GalaxyEditorForm for " << m_galaxy.m_name.toStdString() << std::endl;
+
 
     for(const QString& zoneName : m_galaxy.m_zoneList)
     {
@@ -22,6 +26,8 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
             for(BaseObject* object : objectList) {
                 // TODO do I need maxUniqueID?
                 m_objects.push_back(object);
+
+                std::cout << object->m_name.toStdString() << std::endl;
             }
         }
 
