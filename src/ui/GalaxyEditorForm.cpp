@@ -44,7 +44,8 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
             {
                 QString key = i + '/' + subZone->m_name;
 
-                assert(m_zoneObjects.find(key.toStdString()) != m_zoneObjects.end()); // duplicate zone
+                if(m_zoneObjects.find(key.toStdString()) == m_zoneObjects.end())
+                    continue; // TODO error duplicate zone
 
                 m_zoneObjects.insert(std::make_pair(key.toStdString(), subZone));
             }

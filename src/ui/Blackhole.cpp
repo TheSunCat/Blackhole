@@ -10,7 +10,7 @@
 #include <QListWidget>
 
 QDir Blackhole::m_gameDir;
-int Blackhole::m_gameType = 0;
+int g_gameType = 0;
 
 Blackhole::Blackhole(QWidget *parent) :
     QMainWindow(parent), m_ui(new Ui::Blackhole)
@@ -72,14 +72,14 @@ void Blackhole::openGameDir()
     // TODO this will break if there is an empty folder in StageData
     QFileInfo firstFile = stageData.path() + '/' + galaxies[0];
     if(firstFile.exists())
-        m_gameType = 1;
+        g_gameType = 1;
     else
     {
         QFileInfo firstMapArc = stageData.path() + '/' + galaxies[0] + '/' + galaxies[0] + "Map.arc";
         if(firstMapArc.exists() && firstMapArc.isFile())
-            m_gameType = 2;
+            g_gameType = 2;
         else
-            m_gameType = 0;
+            g_gameType = 0;
     }
 
     for(QString galaxy : galaxies)

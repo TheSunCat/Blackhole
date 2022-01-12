@@ -8,6 +8,7 @@
 class QListWidgetItem;
 
 static std::string blackholeName = "Blackhole v0.1";
+extern int g_gameType;
 
 namespace Ui {
 class Blackhole;
@@ -22,7 +23,6 @@ public:
     ~Blackhole() override;
 
     static QDir m_gameDir;
-    static int m_gameType;
 
 private:
     QScopedPointer<Ui::Blackhole> m_ui;

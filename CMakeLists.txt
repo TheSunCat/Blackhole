@@ -35,8 +35,21 @@ set(blackhole_SRC
 
   src/smg/Galaxy.cpp
   src/smg/Zone.cpp
+
   src/smg/BaseObject.cpp
   src/smg/ZoneObject.cpp
+  src/smg/MapPartObject.cpp
+  src/smg/ChildObject.cpp
+  src/smg/LevelObject.cpp
+  src/smg/StartObject.cpp
+  src/smg/GravityObject.cpp
+  src/smg/SoundObject.cpp
+  src/smg/AreaObject.cpp
+  src/smg/CameraObject.cpp
+  src/smg/CutsceneObject.cpp
+  src/smg/PositionObject.cpp
+  src/smg/DebugObject.cpp
+  src/smg/ChangeObject.cpp
 )
 
 add_executable(blackhole ${blackhole_SRC})
