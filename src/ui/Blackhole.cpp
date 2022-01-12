@@ -70,7 +70,7 @@ void Blackhole::openGameDir()
 
     // detect game type
     // TODO this will break if there is an empty folder in StageData
-    QFileInfo firstFile = stageData.path() + '/' + galaxies[0] + ".arc";
+    QFileInfo firstFile = stageData.path() + '/' + galaxies[0];
     if(firstFile.exists())
         m_gameType = 1;
     else

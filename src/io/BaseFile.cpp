@@ -106,6 +106,9 @@ float BaseFile::readFloat() const
 
 QString BaseFile::readString(uint32_t length, const char* enc) const
 {
+    if(strcmp(enc, "ASCII") == 0)
+        enc = "UTF-8";
+
     QByteArray bytes;
     for(int i = 0; i < length || length == 0; i++)
     {
@@ -113,7 +116,7 @@ QString BaseFile::readString(uint32_t length, const char* enc) const
 
         if(length == 0 && byte == 0)
         {
-            // TODO will this break on multibyte encs like Shift_JIS?
+            // TODO will this break on multibyte encs like Shift-JIS?
             break;
         }
 
@@ -207,6 +210,9 @@ void BaseFile::writeFloat(float val)
 
 int BaseFile::writeString(const QString& str, const char* enc)
 {
+    if(strcmp(enc, "ASCII") == 0)
+        enc = "UTF-8";
+
     QTextEncoder* en = QTextCodec::codecForName(enc)->makeEncoder();
     QByteArray strBytes = en->fromUnicode(str);
 
