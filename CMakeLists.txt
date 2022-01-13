@@ -24,8 +24,6 @@ set(blackhole_SRC
   src/ui/GalaxyEditorForm.cpp
   src/ui/GalaxyRenderer.cpp
 
-  src/filetypes/Yaz0.cpp
-
   src/io/BaseFile.cpp
   src/io/ExternalFile.cpp
   src/io/MemoryFile.cpp
