@@ -64,13 +64,13 @@ void Blackhole::openGameDir()
     QDir stageData = m_gameDir;
     stageData.cd("StageData");
 
-    QStringList galaxies = stageData.entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
+    QStringList galaxies = stageData.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
     if(galaxies.isEmpty())
         return; // game doesn't have galaxies to open
 
     // detect game type
     // TODO this will break if there is an empty folder in StageData
-    QFileInfo firstFile = stageData.path() + '/' + galaxies[0];
+    QFileInfo firstFile = stageData.path() + '/' + galaxies[0] + ".arc";
     if(firstFile.exists())
         g_gameType = 1;
     else
