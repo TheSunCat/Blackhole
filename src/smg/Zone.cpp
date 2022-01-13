@@ -70,92 +70,38 @@ void Zone::loadObjects(const QString& dir, const QString& file)
                 m_zones[layer.toStdString()].push_back(new ZoneObject(*this, dir, layer, file, entry));
             }
         }
-        else if(file == "MapPartsInfo")
+        else
         {
-            for(BcsvFile::Entry& entry : bcsv.m_entries)
-            {
-                m_objects[layer.toStdString()].push_back(new MapPartObject(*this, dir, layer, file, entry));
-            }
-        }
-        else if(file == "ChildObjInfo")
-        {
-            assert(g_gameType == 1); // SMG1 exclusive
+            BaseObject* object = nullptr;
 
             for(BcsvFile::Entry& entry : bcsv.m_entries)
             {
-                m_objects[layer.toStdString()].push_back(new ChildObject(*this, dir, layer, file, entry));
-            }
-        }
-        else if(file == "ObjInfo")
-        {
-            for(BcsvFile::Entry& entry : bcsv.m_entries)
-            {
-                m_objects[layer.toStdString()].push_back(new LevelObject(*this, dir, layer, file, entry));
-            }
-        }
-        else if(file == "StartInfo")
-        {
-            for(BcsvFile::Entry& entry : bcsv.m_entries)
-            {
-                m_objects[layer.toStdString()].push_back(new StartObject(*this, dir, layer, file, entry));
-            }
-        }
-        else if(file == "PlanetObjInfo")
-        {
-            for(BcsvFile::Entry& entry : bcsv.m_entries)
-            {
-                m_objects[layer.toStdString()].push_back(new GravityObject(*this, dir, layer, file, entry));
-            }
-        }
-        else if(file == "SoundInfo")
-        {
-            assert(g_gameType == 1); // SMG1 exclusive
+                if(file == "MapPartsInfo")
+                    object = new MapPartObject(*this, dir, layer, file, entry);
+                else if(file == "ChildObjInfo")
+                    object = new ChildObject(*this, dir, layer, file, entry);
+                else if(file == "ObjInfo")
+                    object = new LevelObject(*this, dir, layer, file, entry);
+                else if(file == "StartInfo")
+                    object = new StartObject(*this, dir, layer, file, entry);
+                else if(file == "PlanetObjInfo")
+                    object = new GravityObject(*this, dir, layer, file, entry);
+                else if(file == "SoundInfo")
+                    object = new SoundObject(*this, dir, layer, file, entry);
+                else if(file == "AreaObjInfo")
+                    object = new AreaObject(*this, dir, layer, file, entry);
+                else if(file == "CameraCubeInfo")
+                    object = new CameraObject(*this, dir, layer, file, entry);
+                else if(file == "DemoObjInfo")
+                    object = new CutsceneObject(*this, dir, layer, file, entry);
+                else if(file == "GeneralPosInfo")
+                    object = new PositionObject(*this, dir, layer, file, entry);
+                else if(file == "DebugMoveInfo")
+                    object = new DebugObject(*this, dir, layer, file, entry);
+                else if(file == "ChangeObjInfo")
+                    object = new ChangeObject(*this, dir, layer, file, entry);
 
-            for(BcsvFile::Entry& entry : bcsv.m_entries)
-            {
-                m_objects[layer.toStdString()].push_back(new SoundObject(*this, dir, layer, file, entry));
-            }
-        }
-        else if(file == "AreaObjInfo")
-        {
-            for(BcsvFile::Entry& entry : bcsv.m_entries)
-            {
-                m_objects[layer.toStdString()].push_back(new AreaObject(*this, dir, layer, file, entry));
-            }
-        }
-        else if(file == "CameraCubeInfo")
-        {
-            for(BcsvFile::Entry& entry : bcsv.m_entries)
-            {
-                m_objects[layer.toStdString()].push_back(new CameraObject(*this, dir, layer, file, entry));
-            }
-        }
-        else if(file == "DemoObjInfo")
-        {
-            for(BcsvFile::Entry& entry : bcsv.m_entries)
-            {
-                m_objects[layer.toStdString()].push_back(new CutsceneObject(*this, dir, layer, file, entry));
-            }
-        }
-        else if(file == "GeneralPosInfo")
-        {
-            for(BcsvFile::Entry& entry : bcsv.m_entries)
-            {
-                m_objects[layer.toStdString()].push_back(new PositionObject(*this, dir, layer, file, entry));
-            }
-        }
-        else if(file == "DebugMoveInfo")
-        {
-            for(BcsvFile::Entry& entry : bcsv.m_entries)
-            {
-                m_objects[layer.toStdString()].push_back(new DebugObject(*this, dir, layer, file, entry));
-            }
-        }
-        else if(file == "ChangeObjInfo")
-        {
-            for(BcsvFile::Entry& entry : bcsv.m_entries)
-            {
-                m_objects[layer.toStdString()].push_back(new ChangeObject(*this, dir, layer, file, entry));
+                m_objects[layer.toStdString()].push_back(object);
             }
         }
     }

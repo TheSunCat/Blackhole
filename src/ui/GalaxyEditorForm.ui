@@ -23,7 +23,7 @@
   <customwidget>
    <class>GalaxyRenderer</class>
    <extends>QOpenGLWidget</extends>
-   <header location="global">ui/GalaxyRenderer.h</header>
+   <header location="global">rendering/GalaxyRenderer.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

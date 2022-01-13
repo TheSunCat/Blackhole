@@ -23,7 +23,7 @@ void Camera::reset()
 void Camera::update()
 {
     m_position = lerp(m_position, m_positionTarget, m_positionDrag);
-    //m_rotation = lerp(m_rotation, m_rotationTarget, m_rotationDrag);
+    //m_orientation = glm::slerp(m_orientation, m_orientationTarget, m_orientationDrag);
 }
 
 void Camera::move(const glm::vec3& delta)
@@ -34,15 +34,18 @@ void Camera::move(const glm::vec3& delta)
 
 void Camera::moveRel(const glm::vec3& delta)
 {
-    glm::vec3 realDelta;
+    glm::vec3 realDelta =
+        delta * right() +
+        delta * up() +
+        delta * forward();
 
+    move(realDelta);
 }
-
 
 void Camera::rotate(const glm::vec3& axis, float angle)
 {
-    // TODO rotationTarget
-    glm::fquat rot = glm::normalize(glm::angleAxis(angle, axis));
+    // TODO m_orientationTarget slerp?
+    glm::quat rot = glm::normalize(glm::angleAxis(angle, axis));
 
     m_orientation = m_orientation * rot;
     m_updateNeeded = true;
@@ -60,13 +63,25 @@ const glm::vec3 Camera::forward() const {
     return glm::vec3(glm::row(rotation(), 2));
 }
 
-glm::mat4 Camera::getViewMatrix()
+glm::mat4 Camera::matrix() const
 {
-    return rotation() * translation();
+    return projection() * view();
 }
 
+glm::mat4 Camera::view() const
+{
+    return /*rotation() */ translation();
+}
+
+glm::mat4 Camera::projection() const {
+	return glm::perspective(m_fov, m_aspectRatio, m_znear, m_zfar);
+}
+#include <iostream>
 glm::mat4 Camera::translation() const {
-    return glm::translate(glm::mat4(), -m_position);
+    std::cout << -m_position.z << std::endl;
+
+    return glm::translate(glm::mat4(1.0f), -m_position);
+
 }
 
 glm::mat4 Camera::rotation() const {
