@@ -1,8 +1,9 @@
 #include "rendering/Camera.h"
 
 #include "Util.h"
+#include <glm/gtc/matrix_access.hpp>
 
-Camera::Camera() : m_front(0, 0, -1)
+Camera::Camera()
 {
     update();
 }
@@ -14,49 +15,60 @@ Camera::~Camera()
 void Camera::reset()
 {
      // TODO what do I reset?
-     m_pos = glm::vec3();
-     m_focus = glm::vec3(1, 0, 0);
-     m_up = glm::vec3(0, 1, 0);
+     m_position = glm::vec3();
 
      update();
 }
 
 void Camera::update()
 {
-    m_focus = lerp(m_focus, m_focusTarget, m_focusDrag);
-    m_rotation = lerp(m_rotation, m_rotationTarget, m_rotationDrag);
-    m_distance = lerp(m_distance, m_distTarget, m_distDrag);
-
-    // calculate camera position
-
-    glm::toMat4(m_orientation);
-    //m_front = Util::rotToVec3(mYaw, mPitch);
-    m_right + glm::normalize(glm::cross(m_front, m_worldUp));
-    m_up + glm::normalize(glm::cross(m_right, m_front));
-
-    m_pos = m_focus - (m_front * m_distance);
+    m_position = lerp(m_position, m_positionTarget, m_positionDrag);
+    //m_rotation = lerp(m_rotation, m_rotationTarget, m_rotationDrag);
 }
 
-void Camera::moveBy(const glm::vec3& delta)
+void Camera::move(const glm::vec3& delta)
 {
-    m_posTarget += delta;
+    m_positionTarget += delta;
     m_updateNeeded = true;
 }
 
-void Camera::rotateBy(const glm::vec3& delta)
+void Camera::moveRel(const glm::vec3& delta)
 {
-    m_rotationTarget += delta;
+    glm::vec3 realDelta;
+
+}
+
+
+void Camera::rotate(const glm::vec3& axis, float angle)
+{
+    // TODO rotationTarget
+    glm::fquat rot = glm::normalize(glm::angleAxis(angle, axis));
+
+    m_orientation = m_orientation * rot;
     m_updateNeeded = true;
 }
 
-void Camera::distBy(float delta)
-{
-    m_distTarget += delta;
-    m_updateNeeded = true;
+const glm::vec3 Camera::right() const {
+    return glm::vec3(glm::row(rotation(), 0));
 }
 
+const glm::vec3 Camera::up() const {
+    return glm::vec3(glm::row(rotation(), 1));
+}
+
+const glm::vec3 Camera::forward() const {
+    return glm::vec3(glm::row(rotation(), 2));
+}
 
 glm::mat4 Camera::getViewMatrix()
 {
-    return glm::lookAt(m_pos, m_pos + m_front, m_up);
+    return rotation() * translation();
+}
+
+glm::mat4 Camera::translation() const {
+    return glm::translate(glm::mat4(), -m_position);
+}
+
+glm::mat4 Camera::rotation() const {
+    return glm::toMat4(m_orientation);
 }

@@ -20,33 +20,33 @@ public:
     void reset();
     void update();
 
-    void moveBy(const glm::vec3& delta);
-    void rotateBy(const glm::vec3& delta);
-    void distBy(float delta);
+    void move(const glm::vec3& delta);
+    void moveRel(const glm::vec3& delta);
+    void rotate(const glm::vec3& axis, float angle);
+
+    const glm::vec3 right() const;
+    const glm::vec3 up() const;
+    const glm::vec3 forward() const;
 
     glm::mat4 getViewMatrix();
 
+    glm::mat4 translation() const;
+    glm::mat4 rotation() const;
+
 private:
-    glm::vec3 m_pos{};
-
+    glm::vec3 m_position{};
     glm::fquat m_orientation{};
-
-    glm::vec3 m_focus{};
 
     float m_moveSpeed = 1.0f;
     float m_rotateSpeed = 1.0f;
-    float m_distance = 1.0f;
 
     bool m_updateNeeded = true;
     glm::mat4 m_viewMatrix;
 
     // smoothing vars
-    float m_distTarget = 0.0f;
-    float m_distDrag = 0.8f;
+    //glm::vec3 m_rotationTarget{};
+    //float m_rotationDrag = 0.8f;
 
-    glm::vec3 m_rotationTarget{};
-    float m_rotationDrag = 0.8f;
-
-    glm::vec3 m_focusTarget{};
-    float m_focusDrag = 0.9f;
+    glm::vec3 m_positionTarget{};
+    float m_positionDrag = 0.9f;
 };
