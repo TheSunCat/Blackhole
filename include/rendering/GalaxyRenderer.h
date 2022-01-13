@@ -2,9 +2,9 @@
 
 #include <QWidget>
 #include <QOpenGLWidget>
-#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_3_3_Core>
 
-class GalaxyRenderer : public QOpenGLWidget, protected QOpenGLFunctions
+class GalaxyRenderer : public QOpenGLWidget, protected QOpenGLFunctions_3_3_Core
 {
 public:
     GalaxyRenderer(QWidget *parent = 0);

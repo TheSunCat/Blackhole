@@ -5,6 +5,8 @@
 #include <QString>
 #include <QDir>
 
+#include <glm/glm.hpp>
+
 #include "ui/Blackhole.h"
 
 // TODO this looks horrid. is there a better way?
@@ -36,3 +38,6 @@ public:
 QString absolutePath(const QString& gamePath);
 
 bool fileExists(const QString& file);
+
+float lerp(float a, float b, float t);
+glm::vec3 lerp(glm::vec3 a, glm::vec3 b, float t);
