@@ -5,7 +5,7 @@
 
 Camera::Camera()
 {
-    update();
+    reset();
 }
 
 Camera::~Camera()
@@ -16,6 +16,7 @@ void Camera::reset()
 {
      // TODO what do I reset?
      m_position = glm::vec3();
+     m_orientation = glm::quat(1, 0, 0, 0);
 
      update();
 }
@@ -70,20 +71,21 @@ glm::mat4 Camera::matrix() const
 
 glm::mat4 Camera::view() const
 {
-    return /*rotation() */ translation();
+    return rotation() * translation();
 }
 
 glm::mat4 Camera::projection() const {
 	return glm::perspective(m_fov, m_aspectRatio, m_znear, m_zfar);
 }
-#include <iostream>
-glm::mat4 Camera::translation() const {
-    std::cout << -m_position.z << std::endl;
 
+glm::mat4 Camera::translation() const {
     return glm::translate(glm::mat4(1.0f), -m_position);
 
 }
 
+#include <iostream>
 glm::mat4 Camera::rotation() const {
+    std::cout << m_orientation.w << ", " << m_orientation.x << ", " << m_orientation.y << ", " << m_orientation.z << ", " << std::endl;
+
     return glm::toMat4(m_orientation);
 }

@@ -16,11 +16,12 @@ GalaxyRenderer::GalaxyRenderer(QWidget *parent) : QOpenGLWidget(parent)
     fmt.setSamples(16); // multisampling set to 16
     setFormat(fmt);
 
-    m_camera.move({0, 0, 3});
+    m_camera.move({0, 0, 10});
 }
 
 GalaxyRenderer::~GalaxyRenderer()
 {
+
 }
 
 void GalaxyRenderer::initializeGL()
@@ -92,14 +93,10 @@ void GalaxyRenderer::initializeGL()
 
 void GalaxyRenderer::paintGL()
 {
-    static float t = 0.0f;
-    t += 0.1f;
-
     m_camera.update();
 
 
-    glClearColor(1.f * sinf(t), 0.f, 0.f, 1.0f);
-    std::cout << "paintGL: " << t << std::endl;
+    glClearColor(0.f, 0.3f, 0.2f, 1.0f);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -109,15 +106,12 @@ void GalaxyRenderer::paintGL()
     model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     glUniformMatrix4fv(glGetUniformLocation(m_objectShader.programId(), "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-    glm::mat4 projection = m_camera.projection();//glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+    glm::mat4 projection = m_camera.projection();
     glUniformMatrix4fv(glGetUniformLocation(m_objectShader.programId(), "projection"), 1, GL_FALSE, &projection[0][0]);
     glm::mat4 view = glm::mat4(1.0f);
 
-    // note that we're translating the scene in the reverse direction of where we want to move
-    view = m_camera.view();//glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    view = m_camera.view();
     glUniformMatrix4fv(glGetUniformLocation(m_objectShader.programId(), "view"), 1, GL_FALSE, &view[0][0]);
-
-    std::cout << m_camera.right().y;
 
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -125,7 +119,7 @@ void GalaxyRenderer::paintGL()
 
 void GalaxyRenderer::resizeGL(int w, int h)
 {
-    glViewport(0,0,w,h);
+    glViewport(0, 0, w, h);
 }
 
 void GalaxyRenderer::mouseMoveEvent(QMouseEvent* event)
@@ -135,7 +129,15 @@ void GalaxyRenderer::mouseMoveEvent(QMouseEvent* event)
 
     glm::vec2 mouseDelta = mousePos - m_lastMousePos;
 
-    //m_camera.rotate(m_camera.up(), mouseDelta.x);
+    if(mouseButtons & Qt::LeftButton)
+    {
+        m_camera.moveRel(glm::vec3(-mouseDelta.x / 1000.f, mouseDelta.y / 1000.f, 0));
+    }
+
+    if(mouseButtons & Qt::RightButton)
+    {
+        m_camera.rotate(glm::vec3(0, 1, 0), -mouseDelta.x / 1000.f);
+    }
 
     update();
 
@@ -146,3 +148,17 @@ void GalaxyRenderer::mousePressEvent(QMouseEvent* event)
 {
     m_lastMousePos = glm::vec2(event->x(), event->y());
 }
+
+void GalaxyRenderer::wheelEvent(QWheelEvent* event)
+{
+    float delta = event->angleDelta().y();
+
+    delta = copysign(1, delta) * delta*delta * 0.00005f;
+
+    m_camera.moveRel(glm::vec3(0, 0, delta));
+
+    std::cout << "Scroll delta: " << delta << std::endl;
+
+    update();
+}
+

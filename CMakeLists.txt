@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
 project(Blackhole)
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
@@ -54,7 +56,7 @@ set(blackhole_SRC
 )
 
 add_executable(blackhole ${blackhole_SRC})
-target_link_libraries(blackhole Qt5::Widgets)
+target_link_libraries(blackhole Qt5::Widgets Threads::Threads)
 
 target_include_directories(blackhole PRIVATE include libs)
 set_property(TARGET blackhole PROPERTY CXX_STANDARD 20)
