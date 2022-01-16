@@ -108,9 +108,7 @@ void GalaxyRenderer::paintGL()
 
     glm::mat4 projection = m_camera.projection();
     glUniformMatrix4fv(glGetUniformLocation(m_objectShader.programId(), "projection"), 1, GL_FALSE, &projection[0][0]);
-    glm::mat4 view = glm::mat4(1.0f);
-
-    view = m_camera.view();
+    glm::mat4 view = m_camera.view();
     glUniformMatrix4fv(glGetUniformLocation(m_objectShader.programId(), "view"), 1, GL_FALSE, &view[0][0]);
 
     glBindVertexArray(VAO);
@@ -136,10 +134,11 @@ void GalaxyRenderer::mouseMoveEvent(QMouseEvent* event)
 
     if(mouseButtons & Qt::RightButton)
     {
-        m_camera.rotate(m_camera.right(), -mouseDelta.y / 1000.f);
-        m_camera.rotate(m_camera.up(), mouseDelta.x / 1000.f);
+        m_camera.rotate(glm::vec3(0, 1, 0), mouseDelta.x / 1000.f);
+        m_camera.rotate(glm::vec3(1, 0, 0), -mouseDelta.y / 1000.f);
     }
 
+    // wrap mouse if it exits while dragging
     if(mouseButtons & Qt::LeftButton || mouseButtons & Qt::RightButton)
     {
         bool leftX = mousePos.x < 0 || mousePos.x > width();

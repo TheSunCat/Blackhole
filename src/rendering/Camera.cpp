@@ -48,20 +48,20 @@ void Camera::rotate(const glm::vec3& axis, float angle)
     // TODO m_orientationTarget slerp?
     glm::quat rot = glm::normalize(glm::angleAxis(angle, axis));
 
-    m_orientation = m_orientation * rot;
+    m_orientation = rot * m_orientation;
     m_updateNeeded = true;
 }
 
 const glm::vec3 Camera::right() const {
-    return glm::vec3(glm::row(rotation(), 0));
+    return m_orientation * glm::vec3(1, 0, 0);
 }
 
 const glm::vec3 Camera::up() const {
-    return glm::vec3(glm::row(rotation(), 1));
+    return m_orientation * glm::vec3(0, 1, 0);
 }
 
 const glm::vec3 Camera::forward() const {
-    return glm::vec3(glm::row(rotation(), 2));
+    return m_orientation * glm::vec3(0, 0, 1);
 }
 
 glm::mat4 Camera::matrix() const
@@ -83,9 +83,6 @@ glm::mat4 Camera::translation() const {
 
 }
 
-#include <iostream>
 glm::mat4 Camera::rotation() const {
-    std::cout << m_orientation.w << ", " << m_orientation.x << ", " << m_orientation.y << ", " << m_orientation.z << ", " << std::endl;
-
     return glm::toMat4(m_orientation);
 }

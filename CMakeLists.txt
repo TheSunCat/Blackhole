@@ -35,6 +35,7 @@ set(blackhole_SRC
   src/io/InRarcFile.cpp
   src/io/BcsvFile.cpp
   src/io/Yaz0File.cpp
+  src/io/BmdFile.cpp
 
   src/smg/Galaxy.cpp
   src/smg/Zone.cpp
