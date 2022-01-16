@@ -31,6 +31,8 @@ class GalaxyRenderer : public QOpenGLWidget, protected QOpenGLFunctions_3_3_Core
 
     Camera m_camera;
     glm::vec2 m_lastMousePos;
+    bool m_mouseDragging = false;
+    int m_mouseWarping = false;
 public:
     GalaxyRenderer(QWidget *parent = 0);
     ~GalaxyRenderer();
@@ -41,6 +43,8 @@ protected:
     void paintGL() override;
 
     void mouseMoveEvent(QMouseEvent *event) override;
-    void mousePressEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void leaveEvent(QEvent *event) override;
 };

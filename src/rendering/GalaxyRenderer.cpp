@@ -136,7 +136,32 @@ void GalaxyRenderer::mouseMoveEvent(QMouseEvent* event)
 
     if(mouseButtons & Qt::RightButton)
     {
-        m_camera.rotate(glm::vec3(0, 1, 0), -mouseDelta.x / 1000.f);
+        m_camera.rotate(m_camera.right(), -mouseDelta.y / 1000.f);
+        m_camera.rotate(m_camera.up(), mouseDelta.x / 1000.f);
+    }
+
+    if(mouseButtons & Qt::LeftButton || mouseButtons & Qt::RightButton)
+    {
+        bool leftX = mousePos.x < 0 || mousePos.x > width();
+        bool leftY = mousePos.y < 0 || mousePos.y > height();
+
+        // check if mouse is exiting
+        if(leftX || leftY)
+        {
+            if(leftX)
+                mousePos.x += (mousePos.x < 0) ? width() : -width();
+
+            if(leftY)
+                mousePos.y += (mousePos.y < 0) ? height() : -height();
+
+            m_lastMousePos = mousePos;
+
+            QPoint globalPos = mapToGlobal(QPoint(mousePos.x, mousePos.y));
+
+            // warp!!
+            QCursor::setPos(globalPos);
+        }
+
     }
 
     update();
@@ -144,21 +169,30 @@ void GalaxyRenderer::mouseMoveEvent(QMouseEvent* event)
     m_lastMousePos = mousePos;
 }
 
-void GalaxyRenderer::mousePressEvent(QMouseEvent* event)
-{
-    m_lastMousePos = glm::vec2(event->x(), event->y());
-}
-
 void GalaxyRenderer::wheelEvent(QWheelEvent* event)
 {
     float delta = event->angleDelta().y();
 
-    delta = copysign(1, delta) * delta*delta * 0.00005f;
+    delta = copysign(1, -delta) * delta*delta * 0.00005f;
 
     m_camera.moveRel(glm::vec3(0, 0, delta));
 
-    std::cout << "Scroll delta: " << delta << std::endl;
-
     update();
+}
+
+void GalaxyRenderer::mousePressEvent(QMouseEvent* event)
+{
+    m_lastMousePos = glm::vec2(event->x(), event->y());
+    m_mouseDragging = true;
+}
+
+void GalaxyRenderer::mouseReleaseEvent(QMouseEvent *event)
+{
+    m_mouseDragging = false;
+}
+
+void GalaxyRenderer::leaveEvent(QEvent* event)
+{
+
 }
 
