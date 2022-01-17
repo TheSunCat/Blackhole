@@ -1,7 +1,6 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include <glm/gtx/quaternion.hpp>
 
 // some code from tizian/Learning-OpenGL
 class Camera
@@ -22,22 +21,22 @@ public:
 
     void move(const glm::vec3& delta);
     void moveRel(const glm::vec3& delta);
-    void rotate(const glm::vec3& axis, float angle);
+    void rotate(const float pitch, const float yaw);
+    void rotateAxis(const glm::vec3& axis, float angle);
 
-    const glm::vec3 right() const;
-    const glm::vec3 up() const;
-    const glm::vec3 forward() const;
+    glm::vec3 m_right;
+    glm::vec3 m_up;
+    glm::vec3 m_front;
 
     glm::mat4 matrix() const;
 
     glm::mat4 projection() const;
     glm::mat4 view() const;
-    glm::mat4 translation() const;
-    glm::mat4 rotation() const;
 
 private:
     glm::vec3 m_position{};
-    glm::quat m_orientation;
+    glm::vec3 m_rotation{};
+    glm::vec3 m_worldUp{0, 1, 0};
 
     float m_moveSpeed = 1.0f;
     float m_rotateSpeed = 1.0f;

@@ -1,7 +1,9 @@
 #include "rendering/Camera.h"
 
 #include "Util.h"
-#include <glm/gtc/matrix_access.hpp>
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 Camera::Camera()
 {
@@ -15,8 +17,9 @@ Camera::~Camera()
 void Camera::reset()
 {
      // TODO what do I reset?
-     m_position = glm::vec3();
-     m_orientation = glm::quat(1, 0, 0, 0);
+     m_position = glm::vec3(); m_positionTarget = m_position;
+     m_rotation = glm::vec3();
+     m_up = glm::vec3(0, 1, 0);
 
      update();
 }
@@ -25,6 +28,13 @@ void Camera::update()
 {
     m_position = lerp(m_position, m_positionTarget, m_positionDrag);
     //m_orientation = glm::slerp(m_orientation, m_orientationTarget, m_orientationDrag);
+
+    m_front.x = cos(m_rotation.y) * cos(m_rotation.x);
+    m_front.y = sin(m_rotation.x);
+    m_front.z = sin(m_rotation.y) * cos(m_rotation.x);
+    m_front = glm::normalize(m_front);
+    m_right = glm::normalize(glm::cross(m_front, m_worldUp));
+    m_up    = glm::normalize(glm::cross(m_right, m_front));
 }
 
 void Camera::move(const glm::vec3& delta)
@@ -36,32 +46,30 @@ void Camera::move(const glm::vec3& delta)
 void Camera::moveRel(const glm::vec3& delta)
 {
     glm::vec3 realDelta =
-        delta * right() +
-        delta * up() +
-        delta * forward();
+        delta.x * m_right +
+        delta.y * m_up +
+        delta.z * m_front;
 
     move(realDelta);
 }
 
-void Camera::rotate(const glm::vec3& axis, float angle)
+void Camera::rotate(const float pitch, const float yaw)
 {
-    // TODO m_orientationTarget slerp?
-    glm::quat rot = glm::normalize(glm::angleAxis(angle, axis));
-
-    m_orientation = rot * m_orientation;
+    m_rotation.x += pitch;
+    m_rotation.y += yaw;
     m_updateNeeded = true;
 }
 
-const glm::vec3 Camera::right() const {
-    return m_orientation * glm::vec3(1, 0, 0);
-}
+void Camera::rotateAxis(const glm::vec3& axis, float angle)
+{
+    glm::quat curOrient = glm::quat(m_rotation);
 
-const glm::vec3 Camera::up() const {
-    return m_orientation * glm::vec3(0, 1, 0);
-}
+    glm::quat delta = glm::normalize(glm::angleAxis(angle, axis));
+    curOrient = delta * curOrient;
 
-const glm::vec3 Camera::forward() const {
-    return m_orientation * glm::vec3(0, 0, 1);
+    m_rotation = glm::eulerAngles(curOrient);
+    m_rotation.z = 0;
+    m_updateNeeded = true;
 }
 
 glm::mat4 Camera::matrix() const
@@ -71,18 +79,9 @@ glm::mat4 Camera::matrix() const
 
 glm::mat4 Camera::view() const
 {
-    return rotation() * translation();
+    return glm::lookAt(m_position, m_position + m_front, m_up);
 }
 
 glm::mat4 Camera::projection() const {
-	return glm::perspective(m_fov, m_aspectRatio, m_znear, m_zfar);
-}
-
-glm::mat4 Camera::translation() const {
-    return glm::translate(glm::mat4(1.0f), -m_position);
-
-}
-
-glm::mat4 Camera::rotation() const {
-    return glm::toMat4(m_orientation);
+    return glm::perspective(m_fov, m_aspectRatio, m_znear, m_zfar);
 }

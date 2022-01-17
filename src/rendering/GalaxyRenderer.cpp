@@ -134,8 +134,8 @@ void GalaxyRenderer::mouseMoveEvent(QMouseEvent* event)
 
     if(mouseButtons & Qt::RightButton)
     {
-        m_camera.rotate(glm::vec3(0, 1, 0), mouseDelta.x / 1000.f);
-        m_camera.rotate(glm::vec3(1, 0, 0), -mouseDelta.y / 1000.f);
+        m_camera.rotateAxis(glm::vec3(0, 1, 0), mouseDelta.x / 1000.f);
+        m_camera.rotateAxis(glm::vec3(1, 0, 0), -mouseDelta.y / 1000.f);
     }
 
     // wrap mouse if it exits while dragging
