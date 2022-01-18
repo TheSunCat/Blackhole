@@ -22,7 +22,6 @@ public:
     void move(const glm::vec3& delta);
     void moveRel(const glm::vec3& delta);
     void rotate(const float pitch, const float yaw);
-    void rotateAxis(const glm::vec3& axis, float angle);
 
     glm::vec3 m_right;
     glm::vec3 m_up;
@@ -36,6 +35,8 @@ public:
 private:
     glm::vec3 m_position{};
     glm::vec3 m_rotation{};
+
+    // TODO allow this to be changed
     glm::vec3 m_worldUp{0, 1, 0};
 
     float m_moveSpeed = 1.0f;

@@ -60,18 +60,6 @@ void Camera::rotate(const float pitch, const float yaw)
     m_updateNeeded = true;
 }
 
-void Camera::rotateAxis(const glm::vec3& axis, float angle)
-{
-    glm::quat curOrient = glm::quat(m_rotation);
-
-    glm::quat delta = glm::normalize(glm::angleAxis(angle, axis));
-    curOrient = delta * curOrient;
-
-    m_rotation = glm::eulerAngles(curOrient);
-    m_rotation.z = 0;
-    m_updateNeeded = true;
-}
-
 glm::mat4 Camera::matrix() const
 {
     return projection() * view();
