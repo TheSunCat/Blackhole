@@ -118,6 +118,8 @@ void GalaxyRenderer::paintGL()
 void GalaxyRenderer::resizeGL(int w, int h)
 {
     glViewport(0, 0, w, h);
+
+    m_camera.setDimensions(width(), height());
 }
 
 void GalaxyRenderer::mouseMoveEvent(QMouseEvent* event)
@@ -171,7 +173,7 @@ void GalaxyRenderer::wheelEvent(QWheelEvent* event)
 {
     float delta = event->angleDelta().y();
 
-    delta = copysign(1, -delta) * delta*delta * 0.00005f;
+    delta = copysign(1, delta) * delta*delta * 0.00005f;
 
     m_camera.moveRel(glm::vec3(0, 0, delta));
 

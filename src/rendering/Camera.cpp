@@ -53,6 +53,12 @@ void Camera::moveRel(const glm::vec3& delta)
     move(realDelta);
 }
 
+void Camera::moveMouse(const float mouseX, const float mouseY)
+{
+    moveRel(glm::vec3(-mouseX * m_pixelFactor.x, mouseY * m_pixelFactor.y, 0));
+}
+
+
 void Camera::rotate(const float pitch, const float yaw)
 {
     m_rotation.x += pitch;
@@ -60,9 +66,18 @@ void Camera::rotate(const float pitch, const float yaw)
     m_updateNeeded = true;
 }
 
+void Camera::rotateMouse(const float mouseX, const float mouseY)
+{
+    rotate(mouseY * m_pixelFactor.y, mouseX * m_pixelFactor.x);
+}
+
 glm::mat4 Camera::matrix() const
 {
     return projection() * view();
+}
+
+glm::mat4 Camera::projection() const {
+    return glm::perspective(m_fov, m_aspectRatio, m_znear, m_zfar);
 }
 
 glm::mat4 Camera::view() const
@@ -70,6 +85,9 @@ glm::mat4 Camera::view() const
     return glm::lookAt(m_position, m_position + m_front, m_up);
 }
 
-glm::mat4 Camera::projection() const {
-    return glm::perspective(m_fov, m_aspectRatio, m_znear, m_zfar);
+void Camera::setDimensions(const float width, const float height)
+{
+    m_aspectRatio = width / height;
+
+    m_pixelFactor = float(2 * tan(m_fov * 0.5f)) * m_aspectRatio / glm::vec2(width, height);
 }
