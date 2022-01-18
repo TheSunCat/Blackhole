@@ -1,6 +1,8 @@
 #include "io/BmdFile.h"
 
 #include <stack>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 BmdFile::BmdFile(BaseFile* inRarcFile) : file(inRarcFile)
 {
@@ -22,6 +24,10 @@ BmdFile::BmdFile(BaseFile* inRarcFile) : file(inRarcFile)
             readEVP1();
         if(section == "DRW1")
             readDRW1();
+        if(section == "JNT1")
+            readJNT1();
+        if(section == "SHP1")
+            readSHP1();
         // TODO other sections
     }
 }
@@ -349,6 +355,276 @@ void BmdFile::readDRW1()
     file->position(sectionStart + sectionSize);
 }
 
+void BmdFile::readJNT1()
+{
+    uint32_t sectionStart = file->position() - 4;
+    uint32_t sectionSize = file->readInt();
+
+    uint16_t jointCount = file->readShort();
+    file->skip(0x2);
+
+    m_joints.clear();
+    m_joints.reserve(jointCount);
+
+    uint32_t jointsOffset = file->readInt();
+    uint32_t unksOffset = file->readInt();
+    uint32_t stringsOffset = file->readInt();
+
+    for(uint32_t i = 0; i < jointCount; i++)
+    {
+        file->position(sectionStart + jointsOffset + (i * 0x40));
+
+        Joint& joint = m_joints[i];
+        joint.unk1 = file->readShort();
+        joint.unk2 = file->readByte();
+        file->skip(0x1);
+
+        joint.scale = readVec3();
+        joint.rotation = glm::vec3(
+            float(file->readShort()),
+            float(file->readShort()),
+            float(file->readShort())
+        )  * float(M_PI / 32768.f);
+
+        file->skip(0x2);
+
+        joint.translation = readVec3();
+
+        glm::mat4 mat = glm::scale(glm::mat4(1.0), joint.scale);
+        mat = glm::eulerAngleXYZ(joint.rotation.x, joint.rotation.y, joint.rotation.z) * mat;
+        mat = glm::translate(mat, joint.translation);
+
+        for(SceneGraphNode& node : m_sceneGraph)
+        {
+            if(node.nodeID != i || node.nodeType != 1)
+                continue;
+
+            SceneGraphNode* parentNode = &node;
+            do
+            {
+                if (parentNode->parentIndex == -1)
+                {
+                    parentNode = nullptr;
+                    break;
+                }
+
+                parentNode = &m_sceneGraph[parentNode->parentIndex];
+            } while(parentNode->nodeType != 1);
+
+            if(parentNode != nullptr)
+                joint.finalMatrix = joint.matrix * m_joints[parentNode->nodeID].finalMatrix;
+            else
+                joint.finalMatrix = joint.matrix;
+
+            // TODO this is awkward
+            break;
+        }
+    }
+
+    file->position(sectionStart + sectionSize);
+}
+
+void BmdFile::readSHP1()
+{
+    uint32_t sectionStart = file->position() - 4;
+    uint32_t sectionSize = file->readInt();
+
+    uint16_t numBatches = file->readShort();
+    file->skip(0x2);
+
+    uint32_t batchesOffset = file->readInt();
+    file->skip(0x8);
+
+    uint8_t batchAttribsOffset = file->readInt();
+    uint8_t matrixTableOffset = file->readInt();
+    uint8_t dataOffset = file->readInt();
+    uint8_t matrixDataOffset = file->readInt();
+    uint8_t pktLocationsOffset = file->readInt();
+
+    m_batches.clear();
+    m_batches.reserve(numBatches);
+
+    for(uint32_t i = 0; i < numBatches; i++)
+    {
+        Batch& batch = m_batches[i];
+
+        file->position(sectionStart + batchesOffset + (i * 0x28));
+
+        batch.matrixType = file->readByte();
+        file->skip(0x1);
+
+        // TODO why & 0xFFFF for a short?
+        uint16_t numPackets = file->readShort() & 0xFFFF;
+        uint16_t attribsOffset = file->readShort() & 0xFFFF;
+        uint16_t firstMatrixIndex = file->readShort() & 0xFFFF;
+        uint16_t firstPktIndex = file->readShort() & 0xFFFF;
+
+        file->skip(0x2);
+        batch.unk = file->readFloat();
+
+        std::vector<uint32_t> attribs;
+        file->position(sectionStart + batchAttribsOffset + attribsOffset);
+
+        uint32_t arrayMask = 0;
+
+        while(true)
+        {
+            uint32_t arrayType = file->readInt();
+            uint32_t dataType = file->readInt();
+
+            if(arrayType == 0xFF)
+                break;
+
+            uint32_t attrib = (arrayType & 0xFF) | ((dataType & 0xFF) << 8);
+            attribs.push_back(attrib);
+
+            arrayMask |= 0b1 << arrayType;
+        }
+
+        batch.packets.clear();
+        batch.packets.reserve(numPackets);
+
+        for(uint32_t j = 0; j < numPackets; j++)
+        {
+            Batch::Packet& packet = batch.packets[j];
+            packet.primitives.clear();
+
+            file->position(sectionStart + matrixDataOffset + ((firstMatrixIndex + j) * 0x8) + 0x2);
+
+            uint16_t matrixTableSize = file->readShort();
+            uint32_t matrixTableFirstIndex = file->readInt();
+
+            packet.matrixTable.clear();
+            packet.matrixTable.reserve(matrixTableSize);
+
+            file->position(sectionStart + matrixTableOffset + (matrixTableFirstIndex * 0x2));
+            for (int k = 0; k < matrixTableSize; k++)
+                packet.matrixTable[k] = file->readShort();
+
+            file->position(sectionStart + pktLocationsOffset + ((firstPktIndex + j) * 0x8));
+
+            uint32_t pktSize = file->readInt();
+            uint32_t pktOffset = file->readInt();
+
+            file->position(sectionStart + dataOffset + pktOffset);
+            uint32_t packetEnd = file->position() + pktSize;
+
+            while(true)
+            {
+                if(file->position() >= packetEnd)
+                    break;
+
+                // TODO why & 0xFF?
+                uint32_t primitiveType = file->readByte() & 0xFF;
+                if(primitiveType == 0)
+                    break;
+
+                uint16_t numVertices = file->readShort();
+                Batch::Packet::Primitive primitive;
+
+                primitive.colorIndices.clear();
+                primitive.colorIndices.reserve(2);
+
+                primitive.texcoordIndices.clear();
+                primitive.texcoordIndices.reserve(8);
+
+                primitive.arrayMask = arrayMask;
+                primitive.numIndices = numVertices;
+
+                if (arrayMask &  1       ) primitive.posMatrixIndices = std::vector<uint32_t>(numVertices);
+                if (arrayMask & (1 <<  9)) primitive.positionIndices = std::vector<uint32_t>(numVertices);
+                if (arrayMask & (1 << 10)) primitive.normalIndices = std::vector<uint32_t>(numVertices);
+                if (arrayMask & (1 << 11)) primitive.colorIndices[0] = std::vector<uint32_t>(numVertices);
+                if (arrayMask & (1 << 12)) primitive.colorIndices[1] = std::vector<uint32_t>(numVertices);
+                if (arrayMask & (1 << 13)) primitive.texcoordIndices[0] = std::vector<uint32_t>(numVertices);
+                if (arrayMask & (1 << 14)) primitive.texcoordIndices[1] = std::vector<uint32_t>(numVertices);
+                if (arrayMask & (1 << 15)) primitive.texcoordIndices[2] = std::vector<uint32_t>(numVertices);
+                if (arrayMask & (1 << 16)) primitive.texcoordIndices[3] = std::vector<uint32_t>(numVertices);
+                if (arrayMask & (1 << 17)) primitive.texcoordIndices[4] = std::vector<uint32_t>(numVertices);
+                if (arrayMask & (1 << 18)) primitive.texcoordIndices[5] = std::vector<uint32_t>(numVertices);
+                if (arrayMask & (1 << 19)) primitive.texcoordIndices[6] = std::vector<uint32_t>(numVertices);
+                if (arrayMask & (1 << 20)) primitive.texcoordIndices[7] = std::vector<uint32_t>(numVertices);
+
+                primitive.primitiveType = primitiveType;
+
+                for(uint32_t k = 0; k < numVertices; k++)
+                {
+                    for(uint32_t attrib : attribs)
+                    {
+                        uint32_t val = 0;
+
+                        switch(attrib & 0xFF00)
+                        {
+                            case 0x0000:
+                            case 0x0100:
+                            {
+                                val = file->readByte() & 0xFF; // TODO why & 0xFF?
+                                break;
+                            }
+                            case 0x0200:
+                            case 0x0300:
+                            {
+                                val = file->readShort() & 0xFFFF; // TODO why & 0xFFFF?
+                                break;
+                            }
+                            default:
+                                assert(false); //Bmd: unsupported index attrib
+
+                        }
+
+                        switch(attrib & 0x00FF)
+                        {
+                            case 0:
+                            {
+                                primitive.posMatrixIndices[k] = val / 3;
+                                break;
+                            }
+                            case 9:
+                            {
+                                primitive.positionIndices[k] = val;
+                                break;
+                            }
+                            case 10:
+                            {
+                                primitive.normalIndices[k] = val;
+                                break;
+                            }
+                            case 11:
+                            case 12:
+                            {
+                                primitive.colorIndices[(attrib & 0xFF) - 11][k] = val;
+                                break;
+                            }
+                            case 13:
+                            case 14:
+                            case 15:
+                            case 16:
+                            case 17:
+                            case 18:
+                            case 19:
+                            case 20:
+                            {
+                                primitive.texcoordIndices[(attrib & 0xFF) - 13][k] = val;
+                                break;
+                            }
+
+                            default:
+                                assert(false); // Bmd: unsupported index attrib
+                        }
+                    }
+
+                }
+
+                packet.primitives.push_back(primitive);
+            }
+
+        }
+
+    }
+
+    file->position(sectionStart + sectionSize);
+}
+
 
 float BmdFile::readArrayShort(uint8_t fixedPoint)
 {
@@ -401,4 +677,13 @@ QColor BmdFile::readColorValue(uint32_t type)
     }
 
     return QColor();
+}
+
+glm::vec3 BmdFile::readVec3()
+{
+    return glm::vec3(
+        file->readFloat(),
+        file->readFloat(),
+        file->readFloat()
+    );
 }
