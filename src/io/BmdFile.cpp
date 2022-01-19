@@ -612,18 +612,159 @@ void BmdFile::readSHP1()
                                 assert(false); // Bmd: unsupported index attrib
                         }
                     }
-
                 }
 
                 packet.primitives.push_back(primitive);
             }
-
         }
-
     }
 
     file->position(sectionStart + sectionSize);
 }
+
+void BmdFile::readMAT3()
+{
+    uint32_t sectionStart = file->position() - 4;
+    uint32_t sectionSize = file->readInt();
+
+    uint16_t materialCount = file->readShort();
+
+    file->skip(0x2);
+    uint32_t materialEntryTableOffsets = file->readInt();
+    uint32_t remapTableOffset = file->readInt();
+
+    std::vector<uint16_t> remapTable;
+    for(uint32_t i = 0; i < materialCount; i++)
+    {
+        file->position(remapTableOffset + i * 0x02);
+        remapTable.push_back(file->readShort());
+    }
+
+    uint32_t nameTableOffset = file->readInt();
+    uint16_t nameTableStringCount = file->readShort();
+    uint32_t nameTableIndex = 0x04;
+
+    std::vector<QString> nameTable;
+    for(uint32_t i = 0; i < nameTableStringCount; i++)
+    {
+        // const hash = view.getUint16(tableIdx + 0x00);
+        file->position(sectionStart + nameTableOffset + nameTableIndex + 0x02);
+        uint16_t stringOffset = file->readShort();
+
+        file->position(sectionStart + nameTableOffset + stringOffset);
+        QString string = file->readString(0, "UTF-8");
+        nameTable.push_back(string);
+        nameTableIndex += 0x04;
+    }
+
+
+    file->position(sectionStart + 0x18);
+    uint32_t indirectTableOffset = file->readInt();
+    uint32_t cullModeTableOffset = file->readInt();
+    uint32_t materialColorTableOffset= file->readInt();
+    uint32_t colorChanCountTableOffset= file->readInt();
+    uint32_t colorChanTableOffset= file->readInt();
+    uint32_t ambientColorTableOffset= file->readInt();
+
+    file->skip(0xC);
+    uint32_t texGenTableOffset= file->readInt();
+    uint32_t postTexGenTableOffset= file->readInt();
+    uint32_t texMtxTableOffset= file->readInt();
+    uint32_t postTexMtxTableOffset= file->readInt();
+    uint32_t textureTableOffset= file->readInt();
+    uint32_t tevOrderTableOffset= file->readInt();
+    uint32_t colorRegisterTableOffset= file->readInt();
+    uint32_t colorConstantTableOffset= file->readInt();
+
+    file->skip(0x4);
+    uint32_t tevStageTableOffset= file->readInt();
+    uint32_t tevSwapModeInfoOffset= file->readInt();
+    uint32_t tevSwapModeTableInfoOffset = file->readInt();
+    uint32_t fogInfoTableOffset= file->readInt();
+    uint32_t alphaTestTableOffset= file->readInt();
+    uint32_t blendModeTableOffset= file->readInt();
+    uint32_t zModeTableOffset= file->readInt();
+
+    m_materials.clear();
+
+    for(uint32_t i = 0; i < materialCount; i++)
+    {
+        uint32_t index = i;
+        QString& name = nameTable[i];
+        uint32_t materialEntryIndex = materialEntryTableOffsets + (0x014C * remapTable[i]);
+
+        file->position(sectionStart + materialEntryIndex);
+        uint8_t materialMode = file->readByte();
+
+        // Bitfield:
+        //   0n001: OPA (Opaque)
+        //   0b010: EDG (TexEdge / Masked)
+        //   0b100: XLU (Translucent)
+        // EDG has never been seen, so ignore it
+        assert(materialMode == 0b001 || materialMode == 0b100);
+
+        uint8_t cullModeIndex = file->readByte();
+        uint8_t colorChanNumIndex = file->readByte();
+        file->skip(0x3);
+        uint8_t zModeIndex = file->readByte();
+
+        std::vector<QColor> colorMatRegs;
+        for(uint32_t j = 0; j < 2; j++)
+        {
+
+            file->position(sectionStart + materialEntryIndex + 0x08 + j * 0x02);
+            uint16_t matColorIndex = file->readShort();
+
+            if (matColorIndex != 0xFFFF)
+            {
+                file->position(sectionStart + materialColorTableOffset + matColorIndex * 0x04);
+                colorMatRegs.push_back(readColor_RGBA8());
+            }
+            else
+            {
+                colorMatRegs.push_back(QColorConstants::White);
+            }
+        }
+
+        std::vector<QColor> colorAmbRegs;
+        for(uint32_t j = 0; j < 2; j++)
+        {
+
+            file->position(sectionStart + materialEntryIndex + 0x14 + j * 0x02);
+            uint16_t ambColorIndex = file->readShort();
+
+            if (ambColorIndex != 0xFFFF)
+            {
+                file->position(sectionStart + ambientColorTableOffset + ambColorIndex * 0x04);
+                colorAmbRegs.push_back(readColor_RGBA8());
+            }
+            else
+            {
+                colorAmbRegs.push_back(QColorConstants::White);
+            }
+        }
+
+        file->position(sectionStart + colorChanCountTableOffset + colorChanNumIndex);
+        uint8_t lightChannelCount = file->readByte();
+        std::vector<GX::LightChannelControl> lightChannels;
+        for(uint32_t j = 0; j < lightChannelCount; j++)
+        {
+            file->position(sectionStart + materialEntryIndex + 0x0C + (j * 2) * 0x02);
+
+            GX::ColorChannelControl colorChannel = readColorChannel(sectionStart + colorChanTableOffset, file->readShort());
+
+            file->position(sectionStart + materialEntryIndex + 0x0C + (j * 2 + 1) * 0x02);
+            GX::ColorChannelControl alphaChannel = readColorChannel(sectionStart + colorChanTableOffset, file->readShort());
+
+            lightChannels.push_back({ colorChannel, alphaChannel });
+        }
+
+        // TODO continue https://github.com/magcius/noclip.website/blob/master/src/Common/JSYSTEM/J3D/J3DLoader.ts#L737
+    }
+
+    file->position(sectionStart + sectionSize);
+}
+
 
 
 float BmdFile::readArrayShort(uint8_t fixedPoint)
@@ -653,7 +794,7 @@ QColor BmdFile::readColor_RGBA8()
     int g = file->readByte() & 0xFF;
     int b = file->readByte() & 0xFF;
     int a = file->readByte() & 0xFF;
-    return QColor(r / 255.f, g / 255.f, b / 255.f, a / 255.f);
+    return QColor(r, g, b, a);
 }
 
 QColor BmdFile::readColor_RGBX8()
@@ -662,7 +803,7 @@ QColor BmdFile::readColor_RGBX8()
     int g = file->readByte() & 0xFF;
     int b = file->readByte() & 0xFF;
     file->readByte();
-    return QColor(r / 255.f, g / 255.f, b / 255.f, 1.f);
+    return QColor(r, g, b);
 }
 
 QColor BmdFile::readColorValue(uint32_t type)
@@ -677,6 +818,49 @@ QColor BmdFile::readColorValue(uint32_t type)
     }
 
     return QColor();
+}
+
+GX::ColorChannelControl BmdFile::readColorChannel(uint32_t absoluteColorChanTableOffset, uint16_t colorChanIndex) {
+    if (colorChanIndex != 0xFFFF) {
+        file->position(absoluteColorChanTableOffset + colorChanIndex * 0x08);
+        bool lightingEnabled = file->readByte();
+        //assert(lightingEnabled < 2);
+
+        GX::ColorSrc matColorSource = GX::ColorSrc(file->readByte());
+        uint8_t litMask = file->readByte();
+        GX::DiffuseFunction diffuseFunction = GX::DiffuseFunction(file->readByte());
+
+        uint8_t attnFn = file->readByte();
+
+        GX::AttenuationFunction attenuationFunction;
+        switch(attnFn)
+        {
+            case 0:
+            case 2:
+                attenuationFunction = GX::AttenuationFunction::NONE;
+                break;
+            case 1:
+                attenuationFunction = GX::AttenuationFunction::SPEC;
+                break;
+            case 3:
+                attenuationFunction = GX::AttenuationFunction::SPOT;
+                break;
+            default:
+                assert(false); // invalid attnFn
+        }
+
+        GX::ColorSrc ambColorSource = GX::ColorSrc(file->readByte());
+
+        return { lightingEnabled, matColorSource, ambColorSource, litMask, diffuseFunction, attenuationFunction };
+    } else {
+        bool lightingEnabled = false;
+        GX::ColorSrc matColorSource = GX::ColorSrc::REG;
+        uint8_t litMask = 0;
+        GX::DiffuseFunction diffuseFunction = GX::DiffuseFunction::CLAMP;
+        GX::AttenuationFunction attenuationFunction = GX::AttenuationFunction::NONE;
+        GX::ColorSrc ambColorSource = GX::ColorSrc::REG;
+        return { lightingEnabled, matColorSource, ambColorSource, litMask, diffuseFunction, attenuationFunction };
+    }
 }
 
 glm::vec3 BmdFile::readVec3()
