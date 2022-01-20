@@ -1,6 +1,8 @@
 #pragma once
 #include <QString>
 #include <QByteArray>
+#include <QStringList>
+
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -8,7 +10,6 @@
 #include "BaseFile.h"
 
 class InRarcFile;
-class QStringList;
 
 class RarcFile
 {

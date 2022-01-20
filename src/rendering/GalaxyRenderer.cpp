@@ -14,7 +14,10 @@ GalaxyRenderer::GalaxyRenderer(QWidget *parent) : QOpenGLWidget(parent)
 
     QSurfaceFormat fmt = format();
     fmt.setSamples(16); // multisampling set to 16
+    fmt.setSwapInterval(1);
     setFormat(fmt);
+
+
 
     m_camera.move({0, 0, 10});
 }

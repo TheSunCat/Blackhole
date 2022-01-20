@@ -32,7 +32,8 @@ BmdFile::BmdFile(BaseFile* inRarcFile) : file(inRarcFile)
             readMAT3();
         if(section == "MDL3")
             readMDL3();
-        // TODO finish sections
+        if(section == "TEX1")
+            readTEX1();
     }
 }
 
@@ -647,21 +648,7 @@ void BmdFile::readMAT3()
     }
 
     uint32_t nameTableOffset = file->readInt();
-    uint16_t nameTableStringCount = file->readShort();
-    uint32_t nameTableIndex = 0x04;
-
-    std::vector<QString> nameTable;
-    for(uint32_t i = 0; i < nameTableStringCount; i++)
-    {
-        // const hash = view.getUint16(tableIdx + 0x00);
-        file->position(sectionStart + nameTableOffset + nameTableIndex + 0x02);
-        uint16_t stringOffset = file->readShort();
-
-        file->position(sectionStart + nameTableOffset + stringOffset);
-        QString string = file->readString(0, "UTF-8");
-        nameTable.push_back(string);
-        nameTableIndex += 0x04;
-    }
+    std::vector<QString> nameTable = readStringTable(sectionStart + nameTableOffset);
 
 
     file->position(sectionStart + 0x18);
@@ -1294,6 +1281,151 @@ void BmdFile::readMDL3()
     file->position(sectionStart + sectionSize);
 }
 
+void BmdFile::readTEX1()
+{
+    uint32_t sectionStart = file->position() - 4;
+    uint32_t sectionSize = file->readInt();
+
+    uint16_t textureCount = file->readShort();
+    file->skip(0x02);
+
+    uint32_t textureHeaderOffset = file->readInt();
+
+    uint32_t nameTableOffset = file->readInt();
+    std::vector<QString> nameTable = readStringTable(sectionStart + nameTableOffset);
+
+    std::vector<Sampler> samplers;
+    std::vector<TextureData> textureDatas;
+    for(uint32_t i = 0; i < textureCount; i++)
+    {
+        uint32_t textureIndex = textureHeaderOffset + i * 0x20;
+        QString& name = nameTable[i];
+
+        GX::BTI_Texture btiTexture = readBTI(sectionStart + textureIndex, name);
+
+        int32_t textureDataIndex = -1;
+
+        // Try to find existing texture data
+        QByteArrayView& textureData = btiTexture.data;
+        if(!textureData.isNull())
+        {
+            for(uint32_t j = 0; j < m_textureDatas.size(); j++)
+            {
+                const TextureData& curTex = m_textureDatas[j];
+
+                if(curTex.data.isNull())
+                    continue;
+
+                if(curTex.data == textureData)
+                    textureDataIndex = j;
+            }
+        }
+
+        if(textureDataIndex < 0)
+        {
+            m_textureDatas.push_back({
+                btiTexture.name,
+                btiTexture.width,
+                btiTexture.height,
+                btiTexture.format,
+                btiTexture.mipCount,
+                btiTexture.data,
+                btiTexture.paletteFormat,
+                btiTexture.paletteData,
+            });
+
+            textureDataIndex = m_textureDatas.size() - 1;
+        }
+
+        m_samplers.push_back({
+            i,
+            btiTexture.name,
+            btiTexture.wrapS,
+            btiTexture.wrapT,
+            btiTexture.minFilter,
+            btiTexture.magFilter,
+            btiTexture.minLOD,
+            btiTexture.maxLOD,
+            btiTexture.lodBias,
+            textureDataIndex
+        });
+    }
+
+    file->position(sectionStart + sectionSize);
+}
+
+GX::BTI_Texture BmdFile::readBTI(uint32_t absoluteStartIndex, const QString& name)
+{
+    file->position(absoluteStartIndex);
+
+    GX::TexFormat format = GX::TexFormat(file->readByte());
+    file->skip(0x01);
+
+    uint16_t width = file->readShort();
+    uint16_t height = file->readShort();
+
+    GX::WrapMode wrapS = GX::WrapMode(file->readByte());
+    GX::WrapMode wrapT = GX::WrapMode(file->readByte());
+    file->skip(0x01);
+
+    GX::TexPalette paletteFormat = GX::TexPalette(file->readByte());
+    uint16_t paletteCount = file->readShort();
+    uint32_t paletteOffset = file->readInt();
+    file->skip(0x04);
+
+    GX::TexFilter minFilter = GX::TexFilter(file->readByte());
+    GX::TexFilter magFilter = GX::TexFilter(file->readByte());
+
+    float minLOD = file->readByte() / 8.f;
+    float maxLOD = file->readByte() / 8.f;
+    uint8_t mipCount = file->readByte();
+    file->skip(0x01);
+
+    float lodBias = file->readShort() / 100.f;
+    uint32_t dataOffset = file->readInt();
+
+    assert(minLOD == 0);
+
+    // TODO is this actually making a view, or is sliced(pos) making a copy of it?
+
+    QByteArrayView data;
+    if(dataOffset != 0)
+        data = QByteArrayView(file->getContents().sliced(absoluteStartIndex + dataOffset));
+
+    QByteArrayView paletteData;
+    if(paletteOffset != 0)
+        paletteData = QByteArrayView(file->getContents().sliced(absoluteStartIndex + paletteOffset, paletteCount * 2));
+
+    return {
+        name, format, width, height,
+        wrapS, wrapT, minFilter, magFilter,
+        minLOD, maxLOD, lodBias, mipCount,
+        data, paletteFormat, paletteData
+    };
+}
+
+
+std::vector<QString> BmdFile::readStringTable(uint32_t absoluteOffset)
+{
+    std::vector<QString> ret;
+
+    uint16_t stringCount = file->readShort();
+    uint32_t index = 0x04;
+    for(uint32_t i = 0; i < stringCount; i++)
+    {
+        // const hash = view.getUint16(tableIdx + 0x00);
+        file->position(absoluteOffset + index + 0x02);
+        uint16_t stringOffset = file->readShort();
+
+        file->position(absoluteOffset + stringOffset);
+        QString string = file->readString(0, "UTF-8");
+        ret.push_back(string);
+        index += 0x04;
+    }
+
+    return ret;
+}
+
 
 float BmdFile::readArrayShort(uint8_t fixedPoint)
 {
@@ -1407,4 +1539,12 @@ glm::vec3 BmdFile::readVec3()
         file->readFloat(),
         file->readFloat()
     );
+}
+
+BmdFile::Material::~Material()
+{
+    // release memory
+
+    for(TexMatrix* texMtx : texMatrices)
+        delete texMtx;
 }

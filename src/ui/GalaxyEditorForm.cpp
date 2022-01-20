@@ -43,7 +43,7 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
         {
             for(ZoneObject* subZone : mainZone.m_zones["common"])
             {
-                QString key = i + '/' + subZone->m_name;
+                QString key = QChar(char(i)) + '/' + subZone->m_name;
 
                 if(m_zoneObjects.find(key.toStdString()) == m_zoneObjects.end())
                     continue; // TODO error duplicate zone
@@ -66,7 +66,7 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
             for(ZoneObject* subZone : mainZone.m_zones[layer])
             {
                 // jank string operations aa
-                QString key; key += i;
+                QString key; key += char(i);
                 key += "/" + subZone->m_name;
 
                 if(m_zoneObjects.find(key.toStdString()) == m_zoneObjects.end())

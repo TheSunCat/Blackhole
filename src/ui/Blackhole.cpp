@@ -70,12 +70,12 @@ void Blackhole::openGameDir()
 
     // detect game type
     // TODO this will break if there is an empty folder in StageData
-    QFileInfo firstFile = stageData.path() + '/' + galaxies[0] + ".arc";
+    QFileInfo firstFile = QFileInfo(stageData.path() + '/' + galaxies[0] + ".arc");
     if(firstFile.exists())
         g_gameType = 1;
     else
     {
-        QFileInfo firstMapArc = stageData.path() + '/' + galaxies[0] + '/' + galaxies[0] + "Map.arc";
+        QFileInfo firstMapArc = QFileInfo(stageData.path() + '/' + galaxies[0] + '/' + galaxies[0] + "Map.arc");
         if(firstMapArc.exists() && firstMapArc.isFile())
             g_gameType = 2;
         else
@@ -86,7 +86,7 @@ void Blackhole::openGameDir()
     {
         BcsvFile::addHash(galaxy);
 
-        QFileInfo galaxyScenario = stageData.path() + '/' + galaxy + '/' + galaxy + "Scenario.arc";
+        QFileInfo galaxyScenario = QFileInfo(stageData.path() + '/' + galaxy + '/' + galaxy + "Scenario.arc");
         if(!galaxyScenario.exists())
             continue;
 

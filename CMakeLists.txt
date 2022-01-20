@@ -11,7 +11,10 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt5Widgets CONFIG REQUIRED)
+find_package(Qt6Widgets CONFIG REQUIRED)
+find_package(Qt6 COMPONENTS OpenGL REQUIRED)
+find_package(Qt6 COMPONENTS OpenGLWidgets REQUIRED)
+find_package(Qt6 COMPONENTS Core5Compat REQUIRED)
 
 set(blackhole_SRC
   include/ui/Blackhole.h
@@ -58,7 +61,7 @@ set(blackhole_SRC
 )
 
 add_executable(blackhole ${blackhole_SRC})
-target_link_libraries(blackhole Qt5::Widgets Threads::Threads)
+target_link_libraries(blackhole Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets Qt6::Core5Compat Threads::Threads)
 
 target_include_directories(blackhole PRIVATE include libs)
 set_property(TARGET blackhole PROPERTY CXX_STANDARD 20)

@@ -8,6 +8,41 @@ namespace GX
 
 // huge thanks to noclip.website for these data structures!
 
+enum class TexFormat {
+    I4 = 0x0,
+    I8 = 0x1,
+    IA4 = 0x2,
+    IA8 = 0x3,
+    RGB565 = 0x4,
+    RGB5A3 = 0x5,
+    RGBA8 = 0x6,
+    C4 = 0x8,
+    C8 = 0x9,
+    C14X2 = 0xA,
+    CMPR = 0xE, /*!< Compressed */
+};
+
+enum class TexPalette {
+    IA8 = 0x00,
+    RGB565 = 0x01,
+    RGB5A3 = 0x02,
+};
+
+enum class WrapMode {
+    CLAMP = 0,
+    REPEAT = 1,
+    MIRROR = 2,
+};
+
+enum class TexFilter {
+    NEAR = 0, /*!< Point sampling, no mipmap */
+    LINEAR = 1, /*!< Bilinear filtering, no mipmap */
+    NEAR_MIP_NEAR = 2, /*!< Point sampling, discrete mipmap */
+    LIN_MIP_NEAR = 3, /*!< Bilinear filtering, discrete mipmap */
+    NEAR_MIP_LIN = 4, /*!< Point sampling, linear mipmap */
+    LIN_MIP_LIN = 5, /*!< Trilinear filtering */
+};
+
 enum class CullMode {
     NONE = 0, /*!< Do not cull any primitives. */
     FRONT = 1, /*!< Cull front-facing primitives. */
@@ -610,6 +645,27 @@ struct FogBlock {
     uint32_t C = 0;
     std::array<uint16_t, 10> adjTable;
     uint32_t adjCenter = 0;
+};
+
+struct BTI_Texture {
+    QString name;
+    TexFormat format;
+
+    uint16_t width, height;
+
+    WrapMode wrapS, wrapT;
+
+    TexFilter minFilter, magFilter;
+
+    float minLOD, maxLOD;
+    float lodBias;
+
+    uint8_t mipCount;
+
+    QByteArrayView data;
+
+    TexPalette paletteFormat;
+    QByteArrayView paletteData;
 };
 
 void autoOptimizeMaterial(Material& mat);

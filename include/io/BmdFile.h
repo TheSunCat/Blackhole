@@ -6,8 +6,10 @@
 
 #include <vector>
 #include <array>
-#include <QColor>
 #include <glm/glm.hpp>
+
+#include <QColor>
+#include <QByteArrayView>
 
 class BmdFile
 {
@@ -231,6 +233,42 @@ class BmdFile
 
         GX::FogBlock fogBlock;
 
+        ~Material();
+    };
+
+    // The way this works is a bit complicated. Basically, textures can have different
+    // LOD or wrap modes but share the same literal texture data. As such, we do a bit
+    // of remapping here. TEX1_TextureData contains the texture data parameters, and
+    // TEX1_Sampler contains the "sampling" parameters like LOD or wrap mode, along with
+    // its associated texture data. Each texture in the TEX1 chunk is turned into a
+    // TEX1_Surface.
+    struct TextureData { // TODO naming style
+        // The name can be used for external lookups and is required.
+        QString name;
+        uint32_t width;
+        uint32_t height;
+        GX::TexFormat format;
+        uint32_t mipCount;
+        QByteArrayView data;
+        GX::TexPalette paletteFormat;
+        QByteArrayView paletteData;
+    };
+
+    struct Sampler {
+        uint32_t index;
+
+        QString name;
+
+        GX::WrapMode wrapS;
+        GX::WrapMode wrapT;
+
+        GX::TexFilter minFilter;
+        GX::TexFilter magFilter;
+
+        float minLOD;
+        float maxLOD;
+        float lodBias;
+        int32_t textureDataIndex;
     };
 
     // actual class starts here
@@ -263,6 +301,10 @@ class BmdFile
     // MAT3
     std::vector<Material> m_materials;
 
+    // TEX1
+    std::vector<TextureData> m_textureDatas;
+    std::vector<Sampler> m_samplers;
+
     void readINF1();
     void readVTX1();
     void readEVP1();
@@ -271,6 +313,11 @@ class BmdFile
     void readSHP1();
     void readMAT3();
     void readMDL3();
+    void readTEX1();
+
+    GX::BTI_Texture readBTI(uint32_t absoluteStartIndex, const QString& name);
+
+    std::vector<QString> readStringTable(uint32_t absoluteOffset);
 
     float readArrayShort(uint8_t fixedPoint);
     float readArrayFloat();
