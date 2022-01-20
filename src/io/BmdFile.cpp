@@ -30,7 +30,9 @@ BmdFile::BmdFile(BaseFile* inRarcFile) : file(inRarcFile)
             readSHP1();
         if(section == "MAT3")
             readMAT3();
-        // TODO other sections
+        if(section == "MDL3")
+            readMDL3();
+        // TODO finish sections
     }
 }
 
@@ -1278,6 +1280,19 @@ void BmdFile::readMAT3()
     file->position(sectionStart + sectionSize);
 }
 
+void BmdFile::readMDL3()
+{
+    uint32_t sectionStart = file->position() - 4;
+    uint32_t sectionSize = file->readInt();
+
+    // this is the most important section
+    // here we're going to parse it with lots of code
+    // it's really good
+    // and uh
+
+    // skip section
+    file->position(sectionStart + sectionSize);
+}
 
 
 float BmdFile::readArrayShort(uint8_t fixedPoint)

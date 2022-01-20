@@ -270,6 +270,7 @@ class BmdFile
     void readJNT1();
     void readSHP1();
     void readMAT3();
+    void readMDL3();
 
     float readArrayShort(uint8_t fixedPoint);
     float readArrayFloat();
