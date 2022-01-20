@@ -216,13 +216,13 @@ class BmdFile
         uint32_t materialMode;
         bool translucent;
 
-        std::vector<uint32_t> indices;
+        std::vector<int16_t> indices;
+
+        std::vector<TexMatrix*> texMatrices; // TODO vector of optionals maybe?
+        std::vector<float> indTexMatrices;
 
         GX::Material gxMaterial;
 
-        std::vector<TexMatrix> texMatrices; // TODO vector of optionals maybe?
-
-        std::vector<float> indTexMatrices;
 
         std::vector<QColor> colorMatRegs;
         std::vector<QColor> colorAmbRegs;
@@ -278,6 +278,7 @@ class BmdFile
     QColor readColorValue(uint32_t type);
     QColor readColor_RGBA8();
     QColor readColor_RGBX8();
+    QColor readColor_RGBA16();
 
     GX::ColorChannelControl readColorChannel(uint32_t absoluteColorChanTableOffset, uint16_t colorChanIndex);
 

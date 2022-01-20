@@ -28,6 +28,8 @@ BmdFile::BmdFile(BaseFile* inRarcFile) : file(inRarcFile)
             readJNT1();
         if(section == "SHP1")
             readSHP1();
+        if(section == "MAT3")
+            readMAT3();
         // TODO other sections
     }
 }
@@ -622,6 +624,8 @@ void BmdFile::readSHP1()
     file->position(sectionStart + sectionSize);
 }
 
+
+// huge thanks to noclip.website for this parser!
 void BmdFile::readMAT3()
 {
     uint32_t sectionStart = file->position() - 4;
@@ -759,7 +763,516 @@ void BmdFile::readMAT3()
             lightChannels.push_back({ colorChannel, alphaChannel });
         }
 
-        // TODO continue https://github.com/magcius/noclip.website/blob/master/src/Common/JSYSTEM/J3D/J3DLoader.ts#L737
+        std::vector<GX::TexGen> texGens;
+        for(uint32_t j = 0; j < 8; j++)
+        {
+            file->position(sectionStart + materialEntryIndex + 0x28 + j * 0x02);
+            int16_t texGenIndex = *(int16_t*)file->readShort(); // type punning. bad?
+
+            if(texGenIndex < 0)
+                continue; // negative index means skip
+
+            file->position(sectionStart + texGenTableOffset + texGenIndex * 0x04);
+            GX::TexGenType type = GX::TexGenType(file->readByte());
+            GX::TexGenSrc source = GX::TexGenSrc(file->readByte());
+            GX::TexGenMatrix matrixCheck = GX::TexGenMatrix(file->readByte());
+            assert(file->readByte() == 0xFF);
+
+            GX::PostTexGenMatrix postMatrix = GX::PostTexGenMatrix::PTIDENTITY;
+
+            file->position(sectionStart + materialEntryIndex + 0x38 + j * 0x02);
+            int16_t postTexGenIndex = *(int16_t*)file->readShort(); // type punning. bad?
+            if(postTexGenTableOffset > 0 && postTexGenIndex >= 0)
+            {
+                file->position(sectionStart + postTexGenTableOffset + texGenIndex * 0x04 + 0x02);
+                postMatrix = GX::PostTexGenMatrix(file->readByte());
+                assert(file->readByte() == 0xFF);
+            }
+
+            // BTK can apply texture animations to materials that have the matrix set to IDENTITY.
+            // For this reason, we always assign a texture matrix. In theory, the file should
+            // have an identity texture matrix in the texMatrices section, so it should render correctly
+            GX::TexGenMatrix matrix = GX::TexGenMatrix(int(GX::TexGenMatrix::TEXMTX0) + j * 3);
+
+            // If we ever find a counter-example for this, I'll have to rethink the scheme, but I
+            // *believe* that texture matrices should always be paired with TexGens in order.
+            assert(matrixCheck == GX::TexGenMatrix::IDENTITY || matrixCheck == matrix);
+
+            bool normalize = false;
+            texGens.push_back({ type, source, matrix, normalize, postMatrix });
+        }
+
+        std::vector<TexMatrix*> texMatrices;
+        for(uint32_t j = 0; j < 10; j++)
+        {
+            file->position(sectionStart + materialEntryIndex + 0x48 + j * 0x02);
+            int16_t texMatrixIndex = *(int16_t*)file->readShort();
+
+            if(texMtxTableOffset > 0 && texMatrixIndex >= 0)
+            {
+                uint32_t texMtxOffset = texMtxTableOffset + texMatrixIndex * 0x64;
+                file->position(sectionStart + texMtxOffset);
+
+                TexMatrixProjection projection = TexMatrixProjection(file->readByte());
+                uint8_t info = file->readByte();
+
+                GX::TexMtxMapMode matrixMode = GX::TexMtxMapMode(info & 0x3F);
+
+                // Detect uses of unlikely map modes.
+                assert(matrixMode != GX::TexMtxMapMode::ProjmapBasic && matrixMode != GX::TexMtxMapMode::ViewProjmapBasic &&
+                        int(matrixMode) != 0x04 && int(matrixMode) != 0x05);
+
+                assert(file->readShort() == 0xFFFF);
+
+                float centerS = file->readFloat();
+                float centerT = file->readFloat();
+                float centerQ = file->readFloat();
+
+                float scaleS = file->readFloat();
+                float scaleT = file->readFloat();
+
+                float rotation = file->readShort() / 0x7FFF;
+                assert(file->readShort() == 0xFFFF);
+
+                float translationS = file->readFloat();
+                float translationT = file->readFloat();
+
+                // TODO is this the right order?
+                glm::mat4 effectMatrix(
+                    file->readFloat(), file->readFloat(), file->readFloat(), file->readFloat(),
+                    file->readFloat(), file->readFloat(), file->readFloat(), file->readFloat(),
+                    file->readFloat(), file->readFloat(), file->readFloat(), file->readFloat(),
+                    file->readFloat(), file->readFloat(), file->readFloat(), file->readFloat()
+
+                );
+
+                glm::mat4 matrix(1.0f);
+                bool isMaya = info >> 7;
+                if(isMaya)
+                {
+                    float theta = rotation * M_PI;
+                    float sinR = sin(theta);
+                    float cosR = cos(theta);
+
+                    matrix[0][0]  = scaleS *  cosR;
+                    matrix[1][0]  = scaleS *  sinR;
+                    matrix[3][0]  = scaleS * ((-0.5 * cosR) - (0.5 * sinR - 0.5) - translationS);
+
+                    matrix[0][1]  = scaleT * -sinR;
+                    matrix[1][1]  = scaleT *  cosR;
+                    matrix[3][1]  = scaleT * ((-0.5 * cosR) + (0.5 * sinR - 0.5) + translationT) + 1.0;
+                }
+                else
+                {
+                    float theta = rotation * M_PI;
+                    float sinR = sin(theta);
+                    float cosR = cos(theta);
+
+                    matrix[0][0]  = scaleS *  cosR;
+                    matrix[1][0]  = scaleS * -sinR;
+                    matrix[3][0] = translationS + centerS - (matrix[0][0] * centerS + matrix[1][0] * centerT);
+
+                    matrix[0][1]  = scaleT *  sinR;
+                    matrix[1][1]  = scaleT *  cosR;
+                    matrix[3][1]  = translationT + centerT - (matrix[1][1] * centerS + matrix[1][1] * centerT);
+                }
+
+                texMatrices.push_back(new TexMatrix{ info, projection, effectMatrix, matrix });
+            }
+            else
+            {
+                texMatrices.push_back(nullptr);
+            }
+        }
+
+        // Since texture matrices are assigned to TEV stages in order, we
+        // should never actually have more than 8 of these.
+        assert(texMatrices[8] == nullptr && texMatrices[9] == nullptr);
+
+        // These are never read in actual J3D.
+        /*
+        const postTexMatrices: (TexMtx | null)[] = [];
+        for (let j = 0; j < 20; j++) {
+            const postTexMtxIndex = view.getInt16(materialEntryIdx + 0x5C + j * 0x02);
+            if (postTexMtxTableOffs > 0 && postTexMtxIndex >= 0)
+                postTexMatrices[j] = readTexMatrix(postTexMtxTableOffs, postTexMtxIndex);
+            else
+                postTexMatrices[j] = null;
+        }
+        */
+
+        std::vector<int16_t> textureIndexes; // shouldn't this be indices?
+        for(uint32_t j = 0; j < 8; j++)
+        {
+            file->position(sectionStart + materialEntryIndex + 0x84 + j * 0x02);
+            uint16_t textureTableIndex = file->readShort();
+            if(textureTableIndex != 0xFFFF)
+            {
+                file->position(sectionStart + textureTableOffset + textureTableIndex * 0x02);
+                textureIndexes.push_back(file->readShort());
+            }
+            else
+            {
+                textureIndexes.push_back(-1);
+            }
+        }
+
+        std::vector<QColor> colorConstants; // shouldn't this be indices?
+        for(uint32_t j = 0; j < 4; j++)
+        {
+            file->position(sectionStart + materialEntryIndex + 0x94 + j * 0x02);
+            uint16_t colorIndex = file->readShort();
+            if(colorIndex != 0xFFFF)
+            {
+                file->position(sectionStart + colorConstantTableOffset + colorIndex * 0x04);
+                colorConstants.push_back(readColor_RGBA8());
+            }
+            else
+            {
+                colorConstants.push_back(QColorConstants::White);
+            }
+        }
+
+        std::vector<QColor> colorRegisters; // shouldn't this be indices?
+        for(uint32_t j = 0; j < 4; j++)
+        {
+            file->position(sectionStart + materialEntryIndex + 0xDC + j * 0x02);
+            uint16_t colorIndex = file->readShort();
+            if(colorIndex != 0xFFFF)
+            {
+                file->position(sectionStart + colorRegisterTableOffset + colorIndex * 0x08);
+                colorConstants.push_back(readColor_RGBA16());
+            }
+            else
+            {
+                colorConstants.push_back(QColorConstants::Transparent);
+            }
+        }
+
+        std::vector<GX::IndTexStage> indTexStages;
+        std::vector<float> indTexMatrices;
+        uint32_t indirectEntryOffset = indirectTableOffset + i * 0x138;
+
+        bool hasIndirectTable = indirectTableOffset != nameTableOffset;
+
+        if(hasIndirectTable)
+        {
+            file->position(sectionStart + indirectEntryOffset);
+
+            uint8_t hasIndirect = file->readByte();
+            assert((hasIndirect & 0b11111110) == 0); // make sure it's a bool
+
+            uint8_t indTexStageNum = file->readByte();
+            assert(indTexStageNum <= 4);
+
+            for(uint32_t j = 0; j < indTexStageNum; j++)
+            {
+                // SetIndTexOrder
+                uint32_t indTexOrderOffset = indirectEntryOffset + 0x04 + j * 0x04;
+                file->position(sectionStart + indTexOrderOffset);
+
+                GX::TexCoordID texCoordId = GX::TexCoordID(file->readByte());
+                GX::TexMapID texture = GX::TexMapID(file->readByte());
+
+                // SetIndTexCoordScale
+                uint32_t indTexScaleOffset = indirectEntryOffset + 0x04 + (0x04 * 4) + (0x1C * 3) + j * 0x04;
+                file->position(sectionStart + indTexScaleOffset);
+
+                GX::IndTexScale scaleS = GX::IndTexScale(file->readByte());
+                GX::IndTexScale scaleT = GX::IndTexScale(file->readByte());
+                indTexStages.push_back({ texCoordId, texture, scaleS, scaleT });
+
+                // SetIndTexMatrix
+                uint32_t indTexMatrixOffset = indirectEntryOffset + 0x04 + (0x04 * 4) + j * 0x1C;
+                file->position(sectionStart + indTexMatrixOffset);
+
+                float p00 = file->readFloat();
+                float p01 = file->readFloat();
+                float p02 = file->readFloat();
+                float p10 = file->readFloat();
+                float p11 = file->readFloat();
+                float p12 = file->readFloat();
+                float scale = pow(2, file->readInt());
+
+                // TODO should this be a mat2x4?
+                indTexMatrices.push_back(p00*scale);
+                indTexMatrices.push_back(p01*scale);
+                indTexMatrices.push_back(p02*scale);
+                indTexMatrices.push_back(scale);
+                indTexMatrices.push_back(p10*scale);
+                indTexMatrices.push_back(p11*scale);
+                indTexMatrices.push_back(p12*scale);
+                indTexMatrices.push_back(0.0f);
+
+            }
+        }
+
+        std::vector<GX::TevStage> tevStages;
+        for(uint32_t j = 0; j < 16; j++)
+        {
+            // TevStage
+            file->position(sectionStart + materialEntryIndex + 0xE4 + j * 0x02);
+
+            int16_t tevStageIndex = *(int16_t*)file->readShort();
+            if(tevStageIndex < 0)
+                continue;
+
+            uint32_t tevStageOffset = tevStageTableOffset + tevStageIndex * 0x14;
+            file->position(sectionStart + tevStageOffset + 1); // skip unk byte
+
+            GX::CC colorInA = GX::CC(file->readByte());
+            GX::CC colorInB = GX::CC(file->readByte());
+            GX::CC colorInC = GX::CC(file->readByte());
+            GX::CC colorInD = GX::CC(file->readByte());
+            GX::TevOp colorOp = GX::TevOp(file->readByte());
+            GX::TevBias colorBias = GX::TevBias(file->readByte());
+            GX::TevScale colorScale = GX::TevScale(file->readByte());
+            bool colorClamp = file->readByte();
+            GX::Register colorRegID = GX::Register(file->readByte());
+
+            GX::CA alphaInA = GX::CA(file->readByte());
+            GX::CA alphaInB = GX::CA(file->readByte());
+            GX::CA alphaInC = GX::CA(file->readByte());
+            GX::CA alphaInD = GX::CA(file->readByte());
+            GX::TevOp alphaOp = GX::TevOp(file->readByte());
+            GX::TevBias alphaBias = GX::TevBias(file->readByte());
+            GX::TevScale alphaScale = GX::TevScale(file->readByte());
+            bool alphaClamp = file->readByte();
+            GX::Register alphaRegID = GX::Register(file->readByte());
+
+            // TevOrder
+            file->position(sectionStart + materialEntryIndex + 0xBC + j * 0x02);
+
+            uint16_t tevOrderIndex = file->readShort();
+
+            uint32_t tevOrderOffset = tevOrderTableOffset + tevOrderIndex * 0x04;
+            file->position(sectionStart + tevOrderOffset);
+
+            GX::TexCoordID texCoordID = GX::TexCoordID(file->readByte());
+            GX::TexMapID texMap = GX::TexMapID(file->readByte());
+
+            GX::RasColorChannelID channelID;
+            switch (GX::ColorChannelID(file->readByte())) {
+                case GX::ColorChannelID::COLOR0:
+                case GX::ColorChannelID::ALPHA0:
+                case GX::ColorChannelID::COLOR0A0:
+                    channelID = GX::RasColorChannelID::COLOR0A0;
+                    break;
+                case GX::ColorChannelID::COLOR1:
+                case GX::ColorChannelID::ALPHA1:
+                case GX::ColorChannelID::COLOR1A1:
+                    channelID = GX::RasColorChannelID::COLOR1A1;
+                    break;
+                case GX::ColorChannelID::ALPHA_BUMP:
+                    channelID = GX::RasColorChannelID::ALPHA_BUMP;
+                    break;
+                case GX::ColorChannelID::ALPHA_BUMP_N:
+                    channelID = GX::RasColorChannelID::ALPHA_BUMP_N;
+                    break;
+                case GX::ColorChannelID::COLOR_ZERO:
+                case GX::ColorChannelID::COLOR_NULL:
+                    channelID = GX::RasColorChannelID::COLOR_ZERO;
+                    break;
+                default:
+                    assert(false);
+            }
+            assert(file->readByte() == 0xFF);
+
+            // KonstSel
+            file->position(sectionStart + materialEntryIndex + 0x9C + j);
+            GX::KonstColorSel konstColorSel = GX::KonstColorSel(file->readByte());
+            file->skip(0x10);
+            GX::KonstAlphaSel konstAlphaSel = GX::KonstAlphaSel(file->readByte());
+
+            // SetTevSwapMode
+            file->position(sectionStart + materialEntryIndex + 0x104 + j * 0x02);
+            uint16_t tevSwapModeIndex = file->readShort();
+
+            file->position(sectionStart + tevSwapModeInfoOffset + tevSwapModeIndex * 0x04);
+            uint8_t tevSwapModeRasSel = file->readByte();
+            uint8_t tevSwapModeTexSel = file->readByte();
+
+            file->position(sectionStart + materialEntryIndex + 0x124 + tevSwapModeRasSel * 0x02);
+            uint16_t tevSwapModeTableRasIndex = file->readShort();
+
+            file->position(sectionStart + materialEntryIndex + 0x124 + tevSwapModeTexSel * 0x02);
+            uint16_t tevSwapModeTableTexIndex = file->readShort();
+
+            file->position(sectionStart + tevSwapModeTableInfoOffset + tevSwapModeTableRasIndex * 0x04);
+            uint8_t rasSwapA = file->readByte();
+            uint8_t rasSwapB = file->readByte();
+            uint8_t rasSwapC = file->readByte();
+            uint8_t rasSwapD = file->readByte();
+
+            file->position(sectionStart + tevSwapModeTableInfoOffset + tevSwapModeTableTexIndex * 0x04);
+            uint8_t texSwapA = file->readByte();
+            uint8_t texSwapB = file->readByte();
+            uint8_t texSwapC = file->readByte();
+            uint8_t texSwapD = file->readByte();
+
+            GX::SwapTable rasSwapTable = {
+                GX::TevColorChan(rasSwapA),
+                GX::TevColorChan(rasSwapB),
+                GX::TevColorChan(rasSwapC),
+                GX::TevColorChan(rasSwapD)
+            };
+
+            GX::SwapTable texSwapTable = {
+                GX::TevColorChan(texSwapA),
+                GX::TevColorChan(texSwapB),
+                GX::TevColorChan(texSwapC),
+                GX::TevColorChan(texSwapD)
+            };
+
+            // SetTevIndirect
+            uint32_t indTexStageOffset = indirectEntryOffset + 0x04 + (0x04 * 4) + (0x1C * 3) + (0x04 * 4) + j * 0x0C;
+            GX::IndTexStageID indTexStage = GX::IndTexStageID::STAGE0;
+            GX::IndTexFormat indTexFormat = GX::IndTexFormat::_8;
+            GX::IndTexBiasSel indTexBiasSel = GX::IndTexBiasSel::NONE;
+            GX::IndTexAlphaSel indTexAlphaSel = GX::IndTexAlphaSel::OFF;
+            GX::IndTexMtxID indTexMatrix = GX::IndTexMtxID::OFF;
+            GX::IndTexWrap indTexWrapS = GX::IndTexWrap::OFF;
+            GX::IndTexWrap indTexWrapT = GX::IndTexWrap::OFF;
+            bool indTexAddPrev = false;
+            bool indTexUseOrigLOD = false;
+
+            if(hasIndirectTable)
+            {
+                file->position(sectionStart + indTexStageOffset);
+
+                indTexStage = GX::IndTexStageID(file->readByte());
+                indTexFormat = GX::IndTexFormat(file->readByte());
+                indTexBiasSel = GX::IndTexBiasSel(file->readByte());
+                indTexMatrix = GX::IndTexMtxID(file->readByte());
+                assert(indTexMatrix <= GX::IndTexMtxID::T2);
+
+                indTexWrapS = GX::IndTexWrap(file->readByte());
+                indTexWrapT = GX::IndTexWrap(file->readByte());
+                indTexAddPrev = file->readByte();
+                indTexUseOrigLOD = file->readByte();
+                indTexAlphaSel = GX::IndTexAlphaSel(file->readByte());
+            }
+
+            tevStages.push_back(GX::TevStage{
+                colorInA, colorInB, colorInC, colorInC, colorOp,
+                colorBias, colorScale, colorClamp, colorRegID,
+
+                alphaInA, alphaInB, alphaInC, alphaInD, alphaOp,
+                alphaBias, alphaScale, alphaClamp, alphaRegID,
+
+                // SetTevOrder
+                texCoordID, texMap, channelID,
+                konstColorSel, konstAlphaSel,
+
+                // SetTevSwapMode / SetTevSwapModeTable
+                rasSwapTable, texSwapTable,
+
+                // SetTevIndirect
+                indTexStage, indTexFormat, indTexBiasSel, indTexAlphaSel,
+                indTexMatrix, indTexWrapS, indTexWrapT, indTexAddPrev, indTexUseOrigLOD
+
+            });
+        }
+
+        // SetAlphaCompare
+        file->position(sectionStart + materialEntryIndex + 0x146);
+        uint16_t alphaTestIndex = file->readShort();
+        uint16_t blendModeIndex = file->readShort();
+
+        uint32_t alphaTestOffset = alphaTestTableOffset + alphaTestIndex * 0x08;
+        file->position(sectionStart + alphaTestOffset);
+
+        GX::CompareType compareA = GX::CompareType(file->readByte());
+        uint8_t referenceA = file->readByte() / 0xFF; // TODO should this be a float?
+        GX::AlphaOp op = GX::AlphaOp(file->readByte());
+        GX::CompareType compareB = GX::CompareType(file->readByte());
+        uint8_t referenceB = file->readByte() / 0xFF;
+        GX::AlphaTest alphaTest = { op, compareA, referenceA, compareB, referenceB };
+
+        // SetBlendMode
+        uint32_t blendModeOffset = blendModeTableOffset + blendModeIndex * 0x04;
+        file->position(sectionStart + blendModeOffset);
+
+        GX::BlendMode blendMode = GX::BlendMode(file->readByte());
+        GX::BlendFactor blendSrcFactor = GX::BlendFactor(file->readByte());
+        GX::BlendFactor blendDstFactor = GX::BlendFactor(file->readByte());
+        GX::LogicOp blendLogicOp = GX::LogicOp(file->readByte());
+
+        file->position(sectionStart + cullModeTableOffset + cullModeIndex * 0x04);
+        GX::CullMode cullMode = GX::CullMode(file->readInt());
+
+        uint32_t zModeOffset = zModeTableOffset + zModeIndex * 4;
+        file->position(zModeOffset);
+
+        bool depthTest = file->readByte();
+        GX::CompareType depthFunc = GX::CompareType(file->readByte());
+        bool depthWrite = file->readByte();
+
+        file->position(sectionStart + materialEntryIndex + 0x144);
+        uint16_t fogInfoIndex = file->readShort();
+
+        uint32_t fogInfoOffset = fogInfoTableOffset + fogInfoIndex * 0x2C;
+        file->position(sectionStart + fogInfoOffset);
+
+        GX::FogType fogType = GX::FogType(file->readByte());
+        bool fogAdjEnabled = file->readByte();
+        uint16_t fogAdjCenter = file->readShort();
+        float fogStartZ = file->readFloat();
+        float fogEndZ = file->readFloat();
+        float fogNearZ = file->readFloat();
+        float fogFarZ = file->readFloat();
+        QColor fogColor = readColor_RGBA8();
+
+        std::array<uint16_t, 10> fogAdjTable;
+        for(uint32_t j = 0; j < 10; j++)
+            fogAdjTable[j] = file->readShort();
+
+        GX::FogBlock fogBlock;
+        bool fogProj = uint8_t(fogType) >> 3;
+        if(fogProj)
+        {
+            // orthographic
+            fogBlock.A = (fogFarZ - fogNearZ) / (fogEndZ - fogStartZ);
+            fogBlock.B = 0.0f;
+            fogBlock.C = (fogStartZ - fogNearZ) / (fogEndZ - fogStartZ);
+        }
+        else
+        {
+            fogBlock.A = (fogFarZ * fogNearZ) / ((fogFarZ - fogNearZ) * (fogEndZ - fogStartZ));
+            fogBlock.B = (fogFarZ) / (fogFarZ - fogNearZ);
+            fogBlock.C = (fogStartZ) / (fogEndZ - fogStartZ);
+        }
+        fogBlock.color = fogColor;
+        fogBlock.adjTable = fogAdjTable;
+        fogBlock.adjCenter = fogAdjCenter;
+
+        bool translucent = materialMode == 0x04;
+        bool colorUpdate = true, alphaUpdate = false;
+
+        GX::RopInfo ropInfo{
+            fogType, fogAdjEnabled,
+            depthTest, depthFunc, depthWrite,
+            blendMode, blendSrcFactor, blendDstFactor, blendLogicOp,
+
+            colorUpdate, alphaUpdate
+        };
+
+        GX::Material gxMaterial{
+            name, cullMode, lightChannels, texGens, tevStages, indTexStages, alphaTest
+        };
+
+        GX::autoOptimizeMaterial(gxMaterial);
+
+        m_materials.push_back(Material{
+            index, name,
+            materialMode, translucent,
+            textureIndexes, texMatrices,
+            indTexMatrices,
+            gxMaterial,
+            colorMatRegs, colorAmbRegs,
+            colorConstants, colorRegisters,
+            fogBlock
+        });
     }
 
     file->position(sectionStart + sectionSize);
@@ -803,7 +1316,16 @@ QColor BmdFile::readColor_RGBX8()
     int g = file->readByte() & 0xFF;
     int b = file->readByte() & 0xFF;
     file->readByte();
-    return QColor(r, g, b);
+    return QColor(qRgb(r, g, b));
+}
+
+QColor BmdFile::readColor_RGBA16()
+{
+    uint16_t r = file->readInt();
+    uint16_t g = file->readInt();
+    uint16_t b = file->readInt();
+    uint16_t a = file->readInt();
+    return QColor(qRgba(r, g, b, a));
 }
 
 QColor BmdFile::readColorValue(uint32_t type)

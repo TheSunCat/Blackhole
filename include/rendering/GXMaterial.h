@@ -6,6 +6,8 @@
 namespace GX
 {
 
+// huge thanks to noclip.website for these data structures!
+
 enum class CullMode {
     NONE = 0, /*!< Do not cull any primitives. */
     FRONT = 1, /*!< Cull front-facing primitives. */
@@ -43,6 +45,27 @@ struct LightChannelControl
 {
     ColorChannelControl alphaChannel;
     ColorChannelControl colorChannel;
+};
+
+enum class TexMtxMapMode {
+    None = 0x00,
+    // Uses "Basic" conventions, no -1...1 remap.
+    // Peach Beach uses EnvmapBasic, not sure on what yet...
+    EnvmapBasic = 0x01,
+    ProjmapBasic = 0x02,
+    ViewProjmapBasic = 0x03,
+    // Unknown: 0x04, 0x05. No known uses.
+    // Uses "Old" conventions, remaps translation in fourth component
+    // TODO(jstpierre): Figure out the geometric interpretation of old vs. new
+    EnvmapOld = 0x06,
+    // Uses "New" conventions, remaps translation in third component
+    Envmap = 0x07,
+    Projmap = 0x08,
+    ViewProjmap = 0x09,
+    // Environment map, but based on a custom effect matrix instead of the default view
+    // matrix. Used by certain actors in Wind Waker, like zouK1 in Master Sword Chamber.
+    EnvmapOldEffectMtx = 0x0A,
+    EnvmapEffectMtx = 0x0B,
 };
 
 enum class TexGenType {
@@ -252,6 +275,19 @@ enum class TexMapID {
     TEXMAP_NULL = 0xFF,
 };
 
+enum class ColorChannelID {
+    COLOR0 = 0,
+    COLOR1 = 1,
+    ALPHA0 = 2,
+    ALPHA1 = 3,
+    COLOR0A0 = 4,
+    COLOR1A1 = 5,
+    COLOR_ZERO = 6,
+    ALPHA_BUMP = 7,
+    ALPHA_BUMP_N = 8,
+    COLOR_NULL = 0xFF,
+};
+
 enum class RasColorChannelID {
     COLOR0A0     = 0,
     COLOR1A1     = 1,
@@ -383,30 +419,24 @@ enum class TevColorChan {
 typedef const std::array<TevColorChan, 4> SwapTable;
 
 struct TevStage {
-    CC colorInA;
-    CC colorInB;
-    CC colorInC;
-    CC colorInD;
+    CC colorInA, colorInB, colorInC, colorInD;
     TevOp colorOp;
     TevBias colorBias;
     TevScale colorScale;
     bool colorClamp;
-    Register colorRegId;
+    Register colorRegID;
 
-    CA alphaInA;
-    CA alphaInB;
-    CA alphaInC;
-    CA alphaInD;
+    CA alphaInA, alphaInB, alphaInC, alphaInD;
     TevOp alphaOp;
     TevBias alphaBias;
     TevScale alphaScale;
     bool alphaClamp;
-    Register alphaRegId;
+    Register alphaRegID;
 
     // SetTevOrder
-    TexCoordID texCoordId;
+    TexCoordID texCoordID;
     TexMapID texMap;
-    RasColorChannelID channelId;
+    RasColorChannelID channelID;
 
     KonstColorSel konstColorSel;
     KonstAlphaSel konstAlphaSel;
@@ -528,18 +558,20 @@ enum class LogicOp {
 struct RopInfo {
     FogType fogType;
     bool fogAdjEnabled;
+
     bool depthTest;
     CompareType depthFunc;
     bool depthWrite;
+
     BlendMode blendMode;
     BlendFactor blendSrcFactor;
     BlendFactor blendDstFactor;
     LogicOp blendLogicOp;
 
-    uint32_t dstAlpha; // TODO optional
-
     bool colorUpdate;
     bool alphaUpdate;
+
+    uint32_t dstAlpha; // TODO optional
 };
 
 struct Material {
@@ -578,15 +610,12 @@ struct FogBlock {
     uint32_t C = 0;
     std::array<uint16_t, 10> adjTable;
     uint32_t adjCenter = 0;
-
-    void reset() {
-        color = QColor(0, 0, 0, 0);
-        A = 0;
-        B = 0;
-        C = 0;
-        adjTable.fill(0);
-        adjCenter = 0;
-    }
 };
+
+void autoOptimizeMaterial(Material& mat);
+
+bool autoOptimizeMaterialHasPostTexMtxBlock(Material& mat);
+bool autoOptimizeMaterialHasLightsBlock(Material& mat);
+bool autoOptimizeMaterialHasFogBlock(Material& mat);
 
 }; // end namespace GX
