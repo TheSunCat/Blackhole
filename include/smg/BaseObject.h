@@ -18,7 +18,9 @@ protected:
 
     glm::vec3 m_pos, m_rot, m_scl;
 
+    friend class ObjectRenderer;
 public:
+
     QString m_name;
 
     BaseObject(Zone& zone, const QString& dir, const QString& layer, const QString& fileName, BcsvFile::Entry& entry);

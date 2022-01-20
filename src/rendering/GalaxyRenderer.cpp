@@ -18,13 +18,17 @@ GalaxyRenderer::GalaxyRenderer(QWidget *parent) : QOpenGLWidget(parent)
     setFormat(fmt);
 
 
-
     m_camera.move({0, 0, 10});
 }
 
 GalaxyRenderer::~GalaxyRenderer()
 {
 
+}
+
+void GalaxyRenderer::addObject(BaseObject* obj)
+{
+    m_objects.push_back(ObjectRenderer(obj));
 }
 
 void GalaxyRenderer::initializeGL()

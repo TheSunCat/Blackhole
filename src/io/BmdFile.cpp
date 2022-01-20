@@ -329,6 +329,8 @@ void BmdFile::readEVP1()
             multiMatrix.matrices[j][3][2] = file->readFloat();
             multiMatrix.matrices[j][3][3] = file->readFloat();
         }
+
+        m_multiMatrices.push_back(multiMatrix);
     }
 
     file->position(sectionStart + sectionSize);
@@ -379,7 +381,8 @@ void BmdFile::readJNT1()
     {
         file->position(sectionStart + jointsOffset + (i * 0x40));
 
-        Joint& joint = m_joints[i];
+        Joint joint;
+
         joint.unk1 = file->readShort();
         joint.unk2 = file->readByte();
         file->skip(0x1);
@@ -424,6 +427,8 @@ void BmdFile::readJNT1()
             // TODO this is awkward
             break;
         }
+
+        m_joints.push_back(joint);
     }
 
     file->position(sectionStart + sectionSize);
@@ -451,7 +456,7 @@ void BmdFile::readSHP1()
 
     for(uint32_t i = 0; i < numBatches; i++)
     {
-        Batch& batch = m_batches[i];
+        Batch batch;
 
         file->position(sectionStart + batchesOffset + (i * 0x28));
 
@@ -622,6 +627,8 @@ void BmdFile::readSHP1()
                 packet.primitives.push_back(primitive);
             }
         }
+
+        m_batches.push_back(batch);
     }
 
     file->position(sectionStart + sectionSize);

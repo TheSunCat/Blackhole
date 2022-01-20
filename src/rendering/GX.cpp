@@ -1,4 +1,4 @@
-#include "rendering/GXMaterial.h"
+#include "rendering/GX.h"
 
 void GX::autoOptimizeMaterial(Material& mat)
 {

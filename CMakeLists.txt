@@ -30,7 +30,9 @@ set(blackhole_SRC
 
   src/rendering/GalaxyRenderer.cpp
   src/rendering/Camera.cpp
-  src/rendering/GXMaterial.cpp
+  src/rendering/GX.cpp
+  src/rendering/Texture.cpp
+  src/rendering/ObjectRenderer.cpp
 
   src/io/BaseFile.cpp
   src/io/ExternalFile.cpp

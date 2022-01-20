@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include "rendering/Camera.h"
+#include "rendering/ObjectRenderer.h"
 
 class GalaxyRenderer : public QOpenGLWidget, protected QOpenGLFunctions_3_3_Core
 {
@@ -32,9 +33,13 @@ class GalaxyRenderer : public QOpenGLWidget, protected QOpenGLFunctions_3_3_Core
     Camera m_camera;
     glm::vec2 m_lastMousePos;
     bool m_mouseDragging = false;
+
+    std::vector<ObjectRenderer> m_objects;
 public:
     GalaxyRenderer(QWidget *parent = 0);
     ~GalaxyRenderer();
+
+    void addObject(BaseObject* obj);
 
 protected:
     void initializeGL() override;

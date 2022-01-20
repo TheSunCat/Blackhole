@@ -9,6 +9,8 @@
 #include "smg/Zone.h"
 #include "smg/BaseObject.h"
 
+#include "rendering/GalaxyRenderer.h"
+
 namespace Ui
 {
 class GalaxyEditorForm;
@@ -25,6 +27,7 @@ public:
 
 private:
     QScopedPointer<Ui::GalaxyEditorForm> m_ui;
+    GalaxyRenderer* m_renderer;
 
     Galaxy m_galaxy;
     std::unordered_map<std::string, Zone> m_zones;

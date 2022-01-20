@@ -14,6 +14,7 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
     setWindowTitle(QString::fromStdString(blackholeName) + " - Editing " + m_galaxy.m_name);
     std::cout << "Created GalaxyEditorForm for " << m_galaxy.m_name.toStdString() << std::endl;
 
+    m_renderer = m_ui->openGLWidget;
 
     for(const QString& zoneName : m_galaxy.m_zoneList)
     {
@@ -75,6 +76,11 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
                 m_zoneObjects.insert(std::make_pair(key.toStdString(), subZone));
             }
         }
+    }
+
+    for(BaseObject* obj : m_objects)
+    {
+        m_renderer->addObject(obj);
     }
 }
 

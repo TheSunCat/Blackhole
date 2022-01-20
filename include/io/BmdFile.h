@@ -2,7 +2,7 @@
 
 #include "io/BaseFile.h"
 
-#include "rendering/GXMaterial.h"
+#include "rendering/GX.h"
 
 #include <vector>
 #include <array>
@@ -75,128 +75,6 @@ class BmdFile
 
         float unk;
     };
-
-    /*struct Material
-    {
-        struct ZModeInfo
-        {
-            bool enableZTest;
-            uint8_t func;
-            bool enableZWrite;
-        };
-
-        struct TevOrderInfo
-        {
-            uint8_t texCoordID;
-            uint8_t texMap;
-            uint8_t channelID;
-        };
-
-        struct ColorInfo // TODO can I use QColor?
-        {
-            uint32_t r, g, b, a;
-        };
-
-        struct TexGenInfo
-        {
-            uint8_t type;
-            uint8_t source;
-            uint8_t matrix;
-        };
-
-        struct TexMatrixInfo
-        {
-            uint8_t proj;
-            uint8_t type;
-
-            uint16_t padding;
-            float centerS, centerT;
-            float unkf0;
-            float scaleS, scaleT;
-            uint16_t rotate;
-            uint32_t padding2;
-            float transS, transT;
-
-            glm::mat4 preMatrix;
-
-            glm::mat4 basicMatrix;
-        };
-
-        struct TevStageInfo
-        {
-            std::vector<uint8_t> colorIn;
-            uint8_t colorOp;
-            uint8_t colorBias;
-            uint8_t colorScale;
-            uint8_t colorClamp;
-            uint8_t colorRegID;
-
-            std::vector<uint8_t> alphaIn;
-            uint8_t alphaOp;
-            uint8_t alphaBias;
-            uint8_t alphaScale;
-            uint8_t alphaClamp;
-            uint8_t alphaRegID;
-        };
-
-        struct TevSwapModeInfo
-        {
-            uint8_t rasSel;
-            uint8_t texSel;
-        };
-
-        struct TevSwapModeTable
-        {
-            uint8_t r, g, b, a;
-        };
-
-        struct AlphaCompInfo
-        {
-            uint8_t func0, func1;
-            uint32_t ref0, ref1;
-            uint8_t mergeFunc;
-        };
-
-        struct BlendModeInfo
-        {
-            uint8_t blendMode;
-            uint8_t srcFactor, dstFactor;
-            uint8_t blendOp;
-        };
-
-        QString name;
-
-        uint8_t drawFlag; // apparently: 1=opaque, 4=translucent, 253=???
-        uint8_t cullMode;
-        uint32_t numChans;
-        uint32_t numTextureGens;
-        uint32_t numTevStages;
-        // matData6
-        ZModeInfo zMode;
-        // matData7
-
-        // lights
-
-        std::vector<TexGenInfo> texGen;
-        // texGenInfo2
-
-        std::vector<TexMatrixInfo> texMtx;
-        // dttMatrices
-
-        std::vector<uint16_t> tevStages;
-        std::vector<ColorInfo> constColors;
-        std::vector<uint8_t> constColorSel;
-        std::vector<uint8_t> constAlphaSel;
-        std::vector<TevOrderInfo> tevOrder;
-        std::vector<ColorInfo> colorS10;
-        std::vector<TevStageInfo> tevStage;
-        std::vector<TevSwapModeInfo> tevSwapMode;
-        std::vector<TevSwapModeTable> tevSwapTable;
-
-        // fog
-        AlphaCompInfo alphaComp;
-        BlendModeInfo blendMode;
-    };*/
 
     enum TexMatrixProjection {
         MTX3x4 = 0,
@@ -333,6 +211,8 @@ class BmdFile
     glm::vec3 readVec3();
 
 public:
+    BmdFile() = default;
+
     BmdFile(BaseFile* inRarcFile);
 
     void save();
