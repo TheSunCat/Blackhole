@@ -15,9 +15,9 @@ class BmdFile
 {
     struct SceneGraphNode
     {
-        uint16_t materialID;
+        uint16_t materialID = -1;
 
-        uint32_t parentIndex;
+        int16_t parentIndex;
         uint32_t nodeType; // 0: shape, 1: joint
         uint16_t nodeID;
     };

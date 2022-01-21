@@ -45,10 +45,10 @@ void BmdFile::readINF1()
     m_sceneGraph.clear();
 
     std::stack<uint16_t> materialStack;
-    std::stack<uint16_t> nodeStack;
+    std::stack<int16_t> nodeStack;
 
     materialStack.push(0xFFFF);
-    nodeStack.push(-1); // TODO -1?
+    nodeStack.push(-1);
 
     file->skip(8);
     m_vertexCount = file->readInt();
@@ -78,20 +78,19 @@ void BmdFile::readINF1()
             case 0x11:
             {
                 materialStack.pop();
-                nodeStack.push(arg);
+                materialStack.push(arg);
                 break;
             }
             case 0x10:
             case 0x12:
             {
-                SceneGraphNode newNode = SceneGraphNode{
+                m_sceneGraph.push_back({
                     materialStack.top(),
                     nodeStack.top(),
-                    uint32_t((curType == 0x12) ? 0 : 1),
+                    curType != 0x12,
                     arg
-                };
+                });
 
-                m_sceneGraph.push_back(newNode);
                 break;
             }
         }
@@ -496,8 +495,7 @@ void BmdFile::readSHP1()
 
         for(uint32_t j = 0; j < numPackets; j++)
         {
-            Batch::Packet& packet = batch.packets[j];
-            packet.primitives.clear();
+            Batch::Packet packet;
 
             file->position(sectionStart + matrixDataOffset + ((firstMatrixIndex + j) * 0x8) + 0x2);
 
@@ -626,6 +624,8 @@ void BmdFile::readSHP1()
 
                 packet.primitives.push_back(primitive);
             }
+
+            batch.packets.push_back(packet);
         }
 
         m_batches.push_back(batch);
