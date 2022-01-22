@@ -444,11 +444,11 @@ void BmdFile::readSHP1()
     uint32_t batchesOffset = file->readInt();
     file->skip(0x8);
 
-    uint8_t batchAttribsOffset = file->readInt();
-    uint8_t matrixTableOffset = file->readInt();
-    uint8_t dataOffset = file->readInt();
-    uint8_t matrixDataOffset = file->readInt();
-    uint8_t pktLocationsOffset = file->readInt();
+    uint32_t batchAttribsOffset = file->readInt();
+    uint32_t matrixTableOffset = file->readInt();
+    uint32_t dataOffset = file->readInt();
+    uint32_t matrixDataOffset = file->readInt();
+    uint32_t pktLocationsOffset = file->readInt();
 
     m_batches.clear();
     m_batches.reserve(numBatches);
@@ -529,12 +529,6 @@ void BmdFile::readSHP1()
 
                 uint16_t numVertices = file->readShort();
                 Batch::Packet::Primitive primitive;
-
-                primitive.colorIndices.clear();
-                primitive.colorIndices.reserve(2);
-
-                primitive.texcoordIndices.clear();
-                primitive.texcoordIndices.reserve(8);
 
                 primitive.arrayMask = arrayMask;
                 primitive.numIndices = numVertices;
@@ -634,6 +628,7 @@ void BmdFile::readSHP1()
     file->position(sectionStart + sectionSize);
 }
 
+#include <iostream>
 
 // huge thanks to noclip.website for this parser!
 void BmdFile::readMAT3()
@@ -650,40 +645,44 @@ void BmdFile::readMAT3()
     std::vector<uint16_t> remapTable;
     for(uint32_t i = 0; i < materialCount; i++)
     {
-        file->position(remapTableOffset + i * 0x02);
+        file->position(sectionStart + remapTableOffset + i * 0x02);
         remapTable.push_back(file->readShort());
     }
+
+    file->position(sectionStart + 0x14);
 
     uint32_t nameTableOffset = file->readInt();
     std::vector<QString> nameTable = readStringTable(sectionStart + nameTableOffset);
 
 
     file->position(sectionStart + 0x18);
-    uint32_t indirectTableOffset = file->readInt();
-    uint32_t cullModeTableOffset = file->readInt();
-    uint32_t materialColorTableOffset= file->readInt();
-    uint32_t colorChanCountTableOffset= file->readInt();
-    uint32_t colorChanTableOffset= file->readInt();
-    uint32_t ambientColorTableOffset= file->readInt();
+    uint32_t indirectTableOffset = file->readInt();         // 0x18
+    uint32_t cullModeTableOffset = file->readInt();         // 0x1C
+    uint32_t materialColorTableOffset = file->readInt();    // 0x20
+    uint32_t colorChanCountTableOffset = file->readInt();   // 0x24
+    uint32_t colorChanTableOffset = file->readInt();        // 0x28
+    uint32_t ambientColorTableOffset = file->readInt();     // 0x2C
 
-    file->skip(0xC);
-    uint32_t texGenTableOffset= file->readInt();
-    uint32_t postTexGenTableOffset= file->readInt();
-    uint32_t texMtxTableOffset= file->readInt();
-    uint32_t postTexMtxTableOffset= file->readInt();
-    uint32_t textureTableOffset= file->readInt();
-    uint32_t tevOrderTableOffset= file->readInt();
-    uint32_t colorRegisterTableOffset= file->readInt();
-    uint32_t colorConstantTableOffset= file->readInt();
+    file->skip(0x08);
+    uint32_t texGenTableOffset = file->readInt();           // 0x38
+    uint32_t postTexGenTableOffset = file->readInt();       // 0x3C
+    uint32_t texMtxTableOffset = file->readInt();           // 0x40
+    uint32_t postTexMtxTableOffset = file->readInt();       // 0x44
+    uint32_t textureTableOffset = file->readInt();          // 0x48
+    uint32_t tevOrderTableOffset = file->readInt();         // 0x4C
+    uint32_t colorRegisterTableOffset = file->readInt();    // 0x50
+    uint32_t colorConstantTableOffset = file->readInt();    // 0x54
 
-    file->skip(0x4);
-    uint32_t tevStageTableOffset= file->readInt();
-    uint32_t tevSwapModeInfoOffset= file->readInt();
+    file->skip(0x04);
+    uint32_t tevStageTableOffset = file->readInt();         // 0x58
+    uint32_t tevSwapModeInfoOffset = file->readInt();
     uint32_t tevSwapModeTableInfoOffset = file->readInt();
-    uint32_t fogInfoTableOffset= file->readInt();
-    uint32_t alphaTestTableOffset= file->readInt();
-    uint32_t blendModeTableOffset= file->readInt();
-    uint32_t zModeTableOffset= file->readInt();
+    uint32_t fogInfoTableOffset = file->readInt();
+    uint32_t alphaTestTableOffset = file->readInt();
+    uint32_t blendModeTableOffset = file->readInt();
+    uint32_t zModeTableOffset = file->readInt();
+
+    std::cout << "Position after reading offsets: " << (file->position() - sectionStart) << std::endl;
 
     m_materials.clear();
 
@@ -763,7 +762,7 @@ void BmdFile::readMAT3()
         for(uint32_t j = 0; j < 8; j++)
         {
             file->position(sectionStart + materialEntryIndex + 0x28 + j * 0x02);
-            int16_t texGenIndex = *(int16_t*)file->readShort(); // type punning. bad?
+            int16_t texGenIndex = file->readShortS();
 
             if(texGenIndex < 0)
                 continue; // negative index means skip
@@ -777,7 +776,7 @@ void BmdFile::readMAT3()
             GX::PostTexGenMatrix postMatrix = GX::PostTexGenMatrix::PTIDENTITY;
 
             file->position(sectionStart + materialEntryIndex + 0x38 + j * 0x02);
-            int16_t postTexGenIndex = *(int16_t*)file->readShort(); // type punning. bad?
+            int16_t postTexGenIndex = file->readShortS(); // type punning. bad?
             if(postTexGenTableOffset > 0 && postTexGenIndex >= 0)
             {
                 file->position(sectionStart + postTexGenTableOffset + texGenIndex * 0x04 + 0x02);
@@ -798,11 +797,11 @@ void BmdFile::readMAT3()
             texGens.push_back({ type, source, matrix, normalize, postMatrix });
         }
 
-        std::vector<TexMatrix*> texMatrices;
+        std::vector<TexMatrix> texMatrices;
         for(uint32_t j = 0; j < 10; j++)
         {
             file->position(sectionStart + materialEntryIndex + 0x48 + j * 0x02);
-            int16_t texMatrixIndex = *(int16_t*)file->readShort();
+            int16_t texMatrixIndex = file->readShortS();
 
             if(texMtxTableOffset > 0 && texMatrixIndex >= 0)
             {
@@ -873,17 +872,17 @@ void BmdFile::readMAT3()
                     matrix[3][1]  = translationT + centerT - (matrix[1][1] * centerS + matrix[1][1] * centerT);
                 }
 
-                texMatrices.push_back(new TexMatrix{ info, projection, effectMatrix, matrix });
+                texMatrices.push_back(TexMatrix{ false, info, projection, effectMatrix, matrix });
             }
             else
             {
-                texMatrices.push_back(nullptr);
+                texMatrices.push_back(TexMatrix{ true });
             }
         }
 
         // Since texture matrices are assigned to TEV stages in order, we
         // should never actually have more than 8 of these.
-        assert(texMatrices[8] == nullptr && texMatrices[9] == nullptr);
+        assert(texMatrices[8].isNull && texMatrices[9].isNull);
 
         // These are never read in actual J3D.
         /*
@@ -1009,7 +1008,7 @@ void BmdFile::readMAT3()
             // TevStage
             file->position(sectionStart + materialEntryIndex + 0xE4 + j * 0x02);
 
-            int16_t tevStageIndex = *(int16_t*)file->readShort();
+            int16_t tevStageIndex = file->readShortS();
             if(tevStageIndex < 0)
                 continue;
 
@@ -1302,7 +1301,7 @@ void BmdFile::readTEX1()
     std::vector<QString> nameTable = readStringTable(sectionStart + nameTableOffset);
 
     std::vector<Sampler> samplers;
-    std::vector<TextureData> textureDatas;
+    std::vector<GX::BTI_Texture> textureDatas;
     for(uint32_t i = 0; i < textureCount; i++)
     {
         uint32_t textureIndex = textureHeaderOffset + i * 0x20;
@@ -1313,12 +1312,12 @@ void BmdFile::readTEX1()
         int32_t textureDataIndex = -1;
 
         // Try to find existing texture data
-        QByteArrayView& textureData = btiTexture.data;
+        QByteArray& textureData = btiTexture.data;
         if(!textureData.isNull())
         {
-            for(uint32_t j = 0; j < m_textureDatas.size(); j++)
+            for(uint32_t j = 0; j < m_textures.size(); j++)
             {
-                const TextureData& curTex = m_textureDatas[j];
+                const GX::BTI_Texture& curTex = m_textures[j];
 
                 if(curTex.data.isNull())
                     continue;
@@ -1330,18 +1329,9 @@ void BmdFile::readTEX1()
 
         if(textureDataIndex < 0)
         {
-            m_textureDatas.push_back({
-                btiTexture.name,
-                btiTexture.width,
-                btiTexture.height,
-                btiTexture.format,
-                btiTexture.mipCount,
-                btiTexture.data,
-                btiTexture.paletteFormat,
-                btiTexture.paletteData,
-            });
+            m_textures.push_back(btiTexture);
 
-            textureDataIndex = m_textureDatas.size() - 1;
+            textureDataIndex = m_textures.size() - 1;
         }
 
         m_samplers.push_back({
@@ -1393,15 +1383,14 @@ GX::BTI_Texture BmdFile::readBTI(uint32_t absoluteStartIndex, const QString& nam
 
     assert(minLOD == 0);
 
-    // TODO is this actually making a view, or is sliced(pos) making a copy of it?
-
-    QByteArrayView data;
+    // TODO is this actually making a "view", or is sliced(pos) making a copy of it?
+    QByteArray data;
     if(dataOffset != 0)
-        data = QByteArrayView(file->getContents().sliced(absoluteStartIndex + dataOffset));
+        data = file->getContents().sliced(absoluteStartIndex + dataOffset);
 
-    QByteArrayView paletteData;
+    QByteArray paletteData;
     if(paletteOffset != 0)
-        paletteData = QByteArrayView(file->getContents().sliced(absoluteStartIndex + paletteOffset, paletteCount * 2));
+        paletteData = file->getContents().sliced(absoluteStartIndex + paletteOffset, paletteCount * 2);
 
     return {
         name, format, width, height,
@@ -1416,6 +1405,7 @@ std::vector<QString> BmdFile::readStringTable(uint32_t absoluteOffset)
 {
     std::vector<QString> ret;
 
+    file->position(absoluteOffset);
     uint16_t stringCount = file->readShort();
     uint32_t index = 0x04;
     for(uint32_t i = 0; i < stringCount; i++)
@@ -1546,12 +1536,4 @@ glm::vec3 BmdFile::readVec3()
         file->readFloat(),
         file->readFloat()
     );
-}
-
-BmdFile::Material::~Material()
-{
-    // release memory
-
-    for(TexMatrix* texMtx : texMatrices)
-        delete texMtx;
 }

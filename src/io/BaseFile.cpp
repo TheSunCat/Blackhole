@@ -58,6 +58,30 @@ uint16_t BaseFile::readShort() const
     return ret;
 }
 
+int16_t BaseFile::readShortS() const
+{
+    int16_t ret = 0;
+
+    uint8_t insignificantByte = readByte();
+    uint8_t significantByte   = readByte();
+
+    if(m_bigEndian)
+    {
+        uint8_t temp = insignificantByte;
+        insignificantByte = significantByte;
+        significantByte = temp;
+    }
+
+    ret |= significantByte   << 7;
+    ret |= insignificantByte << 0;
+
+    if(significantByte >> 7)
+        ret *= -1;
+
+    return ret;
+}
+
+
 uint32_t BaseFile::readInt() const
 {
     uint32_t ret = 0;

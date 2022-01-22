@@ -33,6 +33,7 @@ public:
 
     uint8_t readByte() const;
     uint16_t readShort() const;
+    int16_t readShortS() const;
     uint32_t readInt() const;
     float readFloat() const;
     QString readString(uint32_t length, const char* enc = "ASCII") const;

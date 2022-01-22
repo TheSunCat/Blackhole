@@ -662,10 +662,10 @@ struct BTI_Texture {
 
     uint8_t mipCount;
 
-    QByteArrayView data;
+    QByteArray data;
 
     TexPalette paletteFormat;
-    QByteArrayView paletteData;
+    QByteArray paletteData;
 };
 
 void autoOptimizeMaterial(Material& mat);

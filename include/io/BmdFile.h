@@ -59,8 +59,8 @@ class BmdFile
                 std::vector<uint32_t> posMatrixIndices;
                 std::vector<uint32_t> positionIndices;
                 std::vector<uint32_t> normalIndices;
-                std::vector<std::vector<uint32_t>> colorIndices;
-                std::vector<std::vector<uint32_t>> texcoordIndices;
+                std::array<std::vector<uint32_t>, 2> colorIndices;
+                std::array<std::vector<uint32_t>, 8> texcoordIndices;
             };
 
 
@@ -83,6 +83,8 @@ class BmdFile
 
     struct TexMatrix
     {
+        bool isNull = true;
+
         uint32_t info;
         TexMatrixProjection projection;
         glm::mat4 effectMatrix;
@@ -98,7 +100,7 @@ class BmdFile
 
         std::vector<int16_t> indices;
 
-        std::vector<TexMatrix*> texMatrices; // TODO vector of optionals maybe?
+        std::vector<TexMatrix> texMatrices; // let's leak all the memory!
         std::vector<float> indTexMatrices;
 
         GX::Material gxMaterial;
@@ -110,8 +112,6 @@ class BmdFile
         std::vector<QColor> colorRegisters;
 
         GX::FogBlock fogBlock;
-
-        ~Material();
     };
 
     // The way this works is a bit complicated. Basically, textures can have different
@@ -120,7 +120,7 @@ class BmdFile
     // TEX1_Sampler contains the "sampling" parameters like LOD or wrap mode, along with
     // its associated texture data. Each texture in the TEX1 chunk is turned into a
     // TEX1_Surface.
-    struct TextureData { // TODO naming style
+    /*struct TextureData {
         // The name can be used for external lookups and is required.
         QString name;
         uint32_t width;
@@ -130,7 +130,7 @@ class BmdFile
         QByteArrayView data;
         GX::TexPalette paletteFormat;
         QByteArrayView paletteData;
-    };
+    };*/
 
     struct Sampler {
         uint32_t index;
@@ -151,37 +151,6 @@ class BmdFile
 
     // actual class starts here
     BaseFile* file;
-
-
-    // INF1
-    uint32_t m_vertexCount;
-    std::vector<SceneGraphNode> m_sceneGraph;
-
-    // VTX1
-    uint32_t m_arrayMask;
-    std::vector<glm::vec3> m_positions;
-    std::vector<glm::vec3> m_normals;
-    std::array<std::vector<QColor>, 2> m_colors;
-    std::array<std::vector<glm::vec2>, 8> m_texCoords;
-
-    // EVP1
-    std::vector<MultiMatrix> m_multiMatrices;
-
-    // DRW1
-    std::vector<MatrixType> m_matrixTypes;
-
-    // JNT1
-    std::vector<Joint> m_joints;
-
-    // SHP1
-    std::vector<Batch> m_batches;
-
-    // MAT3
-    std::vector<Material> m_materials;
-
-    // TEX1
-    std::vector<TextureData> m_textureDatas;
-    std::vector<Sampler> m_samplers;
 
     void readINF1();
     void readVTX1();
@@ -217,4 +186,34 @@ public:
 
     void save();
     void close();
+
+    // INF1
+    uint32_t m_vertexCount;
+    std::vector<SceneGraphNode> m_sceneGraph;
+
+    // VTX1
+    uint32_t m_arrayMask;
+    std::vector<glm::vec3> m_positions;
+    std::vector<glm::vec3> m_normals;
+    std::array<std::vector<QColor>, 2> m_colors;
+    std::array<std::vector<glm::vec2>, 8> m_texCoords;
+
+    // EVP1
+    std::vector<MultiMatrix> m_multiMatrices;
+
+    // DRW1
+    std::vector<MatrixType> m_matrixTypes;
+
+    // JNT1
+    std::vector<Joint> m_joints;
+
+    // SHP1
+    std::vector<Batch> m_batches;
+
+    // MAT3
+    std::vector<Material> m_materials;
+
+    // TEX1
+    std::vector<GX::BTI_Texture> m_textures;
+    std::vector<Sampler> m_samplers;
 };
