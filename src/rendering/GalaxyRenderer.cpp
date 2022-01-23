@@ -8,10 +8,6 @@
 
 GalaxyRenderer::GalaxyRenderer(QWidget *parent) : QOpenGLWidget(parent)
 {
-//     this->timer = new QTimer();
-//     QObject::connect(timer, SIGNAL(timeout()), this, SLOT(processing()));
-//     timer->start( timerInterval );
-
     QSurfaceFormat fmt = format();
     fmt.setSamples(16); // multisampling set to 16
     fmt.setSwapInterval(1);
