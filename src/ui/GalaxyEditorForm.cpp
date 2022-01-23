@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
+#include <future>
 
 #include "ui/Blackhole.h"
 #include "smg/ZoneObject.h"
@@ -78,9 +80,11 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
         }
     }
 
+    std::vector<std::future<void>> futures;
+
     for(BaseObject* obj : m_objects)
     {
-        m_renderer->addObject(obj);
+        futures.push_back(std::async(std::launch::async, &GalaxyRenderer::addObject, m_renderer, obj));
     }
 }
 

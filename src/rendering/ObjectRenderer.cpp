@@ -4,6 +4,8 @@
 #include "rendering/Texture.h"
 
 #include <iostream>
+#include <future>
+#include <vector>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
@@ -25,16 +27,16 @@ ObjectRenderer::ObjectRenderer(BaseObject* obj)
     else if(m_rarc.fileExists('/' + m_modelName + '/' + m_modelName + ".bmd"))
         m_model = BmdFile(m_rarc.openFile('/' + m_modelName + '/' + m_modelName + ".bmd"));
 
+    std::vector<std::future<void>> futures;
+    std::mutex m;
 
     for(auto& tex : m_model.m_textures)
     {
-        std::cout << "Dumping texture " << tex.name.toStdString() << ". Format: " << int(tex.format) << std::endl;
+        futures.push_back(std::async(std::launch::async, [&] {
+            Texture decTex = Texture::fromBTI(tex);
 
-        Texture decTex = Texture::fromBTI(tex);
-
-        std::string fileName = "/home/sunny/Documents/Blackhole/test/"; fileName += m_modelName.toStdString();
-        fileName += '_'; fileName += tex.name.toStdString(); fileName += ".png";
-
-        stbi_write_png(fileName.c_str(), tex.width, tex.height, 4, decTex.pixels, tex.width * 4);
+            std::lock_guard<std::mutex> lock(m);
+            m_textures.push_back(std::move(decTex));
+        }));
     }
 }

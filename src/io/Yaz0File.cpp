@@ -19,7 +19,7 @@ void Yaz0File::save()
     // TODO release storage here maybe
 }
 
-QByteArray Yaz0File::decompress(QByteArray data)
+QByteArray Yaz0File::decompress(const QByteArray& data)
 {
     if(!data.startsWith("Yaz0"))
         return data; // TODO error message?
@@ -67,7 +67,7 @@ QByteArray Yaz0File::decompress(QByteArray data)
     return ret;
 }
 
-QByteArray Yaz0File::compress(QByteArray data)
+QByteArray Yaz0File::compress(const QByteArray& data)
 {
     size_t compressedSize = 16 + data.size() + (data.size() / 8);
 
@@ -144,7 +144,7 @@ QByteArray Yaz0File::compress(QByteArray data)
     return ret;
 }
 
-Yaz0File::Occurrence Yaz0File::findOccurrence(QByteArray data, uint32_t pos)
+Yaz0File::Occurrence Yaz0File::findOccurrence(const QByteArray& data, uint32_t pos)
 {
     Occurrence ret;
 

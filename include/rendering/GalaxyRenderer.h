@@ -39,6 +39,7 @@ public:
     GalaxyRenderer(QWidget *parent = 0);
     ~GalaxyRenderer();
 
+    // thread-safe
     void addObject(BaseObject* obj);
 
 protected:

@@ -17,13 +17,13 @@ class Yaz0File : public MemoryFile
         uint32_t length = 0;
     };
 
-    static Occurrence findOccurrence(QByteArray data, uint32_t pos);
+    static Occurrence findOccurrence(const QByteArray& data, uint32_t pos);
 
 public:
     Yaz0File(QString filePath);
 
     void save() override;
 
-    static QByteArray decompress(QByteArray data);
-    static QByteArray compress(QByteArray data);
+    static QByteArray decompress(const QByteArray& data);
+    static QByteArray compress(const QByteArray& data);
 };

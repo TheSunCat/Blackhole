@@ -26,9 +26,13 @@ GalaxyRenderer::~GalaxyRenderer()
 
 }
 
+std::mutex s_m;
 void GalaxyRenderer::addObject(BaseObject* obj)
 {
-    m_objects.push_back(ObjectRenderer(obj));
+    ObjectRenderer r = ObjectRenderer(obj);
+
+    std::lock_guard<std::mutex> lock(s_m);
+    m_objects.push_back(std::move(r));
 }
 
 void GalaxyRenderer::initializeGL()

@@ -628,8 +628,6 @@ void BmdFile::readSHP1()
     file->position(sectionStart + sectionSize);
 }
 
-#include <iostream>
-
 // huge thanks to noclip.website for this parser!
 void BmdFile::readMAT3()
 {
@@ -681,8 +679,6 @@ void BmdFile::readMAT3()
     uint32_t alphaTestTableOffset = file->readInt();
     uint32_t blendModeTableOffset = file->readInt();
     uint32_t zModeTableOffset = file->readInt();
-
-    std::cout << "Position after reading offsets: " << (file->position() - sectionStart) << std::endl;
 
     m_materials.clear();
 
