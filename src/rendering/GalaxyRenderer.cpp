@@ -189,7 +189,7 @@ void GalaxyRenderer::wheelEvent(QWheelEvent* event)
 
 void GalaxyRenderer::mousePressEvent(QMouseEvent* event)
 {
-    m_lastMousePos = glm::vec2(event->x(), event->y());
+    m_lastMousePos = glm::vec2(event->pos().x(), event->pos().y());
     m_mouseDragging = true;
 }
 
