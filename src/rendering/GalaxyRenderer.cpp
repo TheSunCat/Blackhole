@@ -31,6 +31,8 @@ void GalaxyRenderer::addObject(BaseObject* obj)
     m_objects.push_back(std::move(r));
 }
 
+
+
 void GalaxyRenderer::initializeGL()
 {
     initializeOpenGLFunctions();
@@ -131,7 +133,7 @@ void GalaxyRenderer::resizeGL(int w, int h)
 
 void GalaxyRenderer::mouseMoveEvent(QMouseEvent* event)
 {
-    glm::vec2 mousePos = glm::vec2(event->x(), event->y());
+    glm::vec2 mousePos = glm::vec2(event->position().x(), event->position().y());
     uint32_t mouseButtons = event->buttons();
 
     glm::vec2 mouseDelta = mousePos - m_lastMousePos;
@@ -143,7 +145,7 @@ void GalaxyRenderer::mouseMoveEvent(QMouseEvent* event)
 
     if(mouseButtons & Qt::RightButton)
     {
-        m_camera.rotate(-mouseDelta.y / 1000.f, mouseDelta.x / 1000.f);
+        m_camera.rotate(mouseDelta.y / 1000.f, mouseDelta.x / 1000.f);
     }
 
     // wrap mouse if it exits while dragging

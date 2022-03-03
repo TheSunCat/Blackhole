@@ -453,6 +453,13 @@ enum class TevColorChan {
 
 typedef const std::array<TevColorChan, 4> SwapTable;
 
+constexpr std::array<SwapTable, 4> tevDefaultSwapTables{
+    SwapTable{TevColorChan::R, TevColorChan::G, TevColorChan::B, TevColorChan::A},
+    SwapTable{TevColorChan::R, TevColorChan::R, TevColorChan::R, TevColorChan::A},
+    SwapTable{TevColorChan::G, TevColorChan::G, TevColorChan::G, TevColorChan::A},
+    SwapTable{TevColorChan::B, TevColorChan::B, TevColorChan::B, TevColorChan::A}
+};
+
 struct TevStage {
     CC colorInA, colorInB, colorInC, colorInD;
     TevOp colorOp;
@@ -611,7 +618,7 @@ struct RopInfo {
 
 struct Material {
     // Debugging & ID
-    QString name;
+    const char* name;
 
     // Polygon state
     CullMode cullMode;
@@ -645,6 +652,15 @@ struct FogBlock {
     uint32_t C = 0;
     std::array<uint16_t, 10> adjTable;
     uint32_t adjCenter = 0;
+};
+
+struct Light
+{
+    glm::vec3 position;
+    glm::vec3 direction;
+    glm::vec3 distAtten; // TODO attenuation?
+    glm::vec3 cosAtten;
+    QColor color;
 };
 
 struct BTI_Texture {

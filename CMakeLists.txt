@@ -16,6 +16,8 @@ find_package(Qt6 COMPONENTS OpenGL REQUIRED)
 find_package(Qt6 COMPONENTS OpenGLWidgets REQUIRED)
 find_package(Qt6 COMPONENTS Core5Compat REQUIRED)
 
+add_subdirectory(glm)
+
 set(blackhole_SRC
   include/ui/Blackhole.h
   include/ui/AboutForm.h
@@ -33,6 +35,7 @@ set(blackhole_SRC
   src/rendering/GX.cpp
   src/rendering/Texture.cpp
   src/rendering/ObjectRenderer.cpp
+  src/rendering/Material.cpp
 
   src/io/BaseFile.cpp
   src/io/ExternalFile.cpp
@@ -65,7 +68,7 @@ set(blackhole_SRC
 add_executable(blackhole ${blackhole_SRC})
 target_link_libraries(blackhole Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets Qt6::Core5Compat Threads::Threads)
 
-target_include_directories(blackhole PRIVATE include libs)
+target_include_directories(blackhole PRIVATE include libs glm)
 set_property(TARGET blackhole PROPERTY CXX_STANDARD 20)
 
 # Install the executable
