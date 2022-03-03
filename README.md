@@ -1,20 +1,28 @@
-Blackhole
-----------------------
+# Blackhole
 
-Please clone the repository recursively, to get the submodules!
+A multi-purpose visual editor for the Galaxy games, aiming for modularity, cross-platform support, and maintainable code.
 
-Make sure your system has the Qt6 and Qt5-compat libraries installed with your package manager.
+## Building from source
+
+Because Blackhole is in early stages of development, no binaries are provided. You may follow the instructions below to build the source code and help with development. :)
+
+```console
+git clone --recursive https://github.com/RealTheSunCat/Blackhole
+```
+Make sure to clone Blackhole **recursively**, or it will not build!
+
+Install the Qt6 and Qt5-compat libraries with your preferred package manager.
 You will also need CMake installed.
 
-On Arch Linux, the packages can be installed with the following command:
-```
+On Arch Linux, the packages can be installed via the following command:
+```console
 sudo pacman -S qt6 qt6-5compat cmake
 ```
 
--- Build instructions --
-```
-cd build
+Finally, you can run CMake to create project files. Here is an example of an out-of-tree build using GNU Makefiles:
+```console
+mkdir build && cd build
 cmake ..
 make
-```
 ./blackhole
+```
