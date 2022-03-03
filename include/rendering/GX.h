@@ -2,6 +2,7 @@
 
 #include <QString>
 #include <QColor>
+#include <glm/glm.hpp>
 
 namespace GX
 {
@@ -618,7 +619,7 @@ struct RopInfo {
 
 struct Material {
     // Debugging & ID
-    const char* name;
+    QString name;
 
     // Polygon state
     CullMode cullMode;
@@ -637,12 +638,12 @@ struct Material {
     RopInfo ropInfo;
 
     // Optimization and other state (TODO OPTIONAL)
-    bool usePnMtxIdx;
-    std::vector<bool> useTexMtxIdx;
-    bool hasPostTexMtxBlock;
-    bool hasLightsBlock;
-    bool hasFogBlock;
-    bool hasDynamicAlphaTest;
+    bool usePnMtxIdx = true;
+    std::vector<bool> useTexMtxIdx; // defaults to false
+    bool hasPostTexMtxBlock = true;
+    bool hasLightsBlock = true;
+    bool hasFogBlock = false;
+    bool hasDynamicAlphaTest = false;
 };
 
 struct FogBlock {
