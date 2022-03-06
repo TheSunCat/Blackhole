@@ -7,7 +7,8 @@ class MemoryFile : public BaseFile
 public:
     MemoryFile() = default;
 
-    MemoryFile(QByteArray buffer);
+    MemoryFile(const std::vector< uint8_t >& buffer)
+;
 
     virtual void save() override;
     virtual void close() override;

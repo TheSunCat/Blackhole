@@ -1,6 +1,6 @@
 #include "io/MemoryFile.h"
 
-MemoryFile::MemoryFile(QByteArray buffer)
+MemoryFile::MemoryFile(const std::vector<uint8_t>& buffer)
 {
     m_contents = buffer;
 }

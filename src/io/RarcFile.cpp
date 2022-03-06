@@ -111,7 +111,7 @@ void RarcFile::save()
     // load all files that haven't been read yet
     for(auto& [key, fileEntry] : fileEntries)
     {
-        if(!fileEntry->data.isEmpty())
+        if(!fileEntry->data.empty())
             continue;
 
         file->position(fileEntry->dataOffset);
@@ -235,9 +235,7 @@ void RarcFile::save()
             file->position(dataOffset + dataSubOffset);
             fileEntry->dataOffset = file->position();
 
-            // TODO can we just initialize it with fileEntry->data?
-            QByteArray fileData(fileEntry->dataSize, 0);
-            fileData.replace(0, fileEntry->data.size(), fileEntry->data);
+            std::vector<uint8_t> fileData(fileEntry->data);
 
             file->writeBytes(fileData);
             dataSubOffset += align32(fileEntry->dataSize);
@@ -489,11 +487,11 @@ BaseFile* RarcFile::openFile(const QString& filePath)
     return new InRarcFile(this, filePath);
 }
 
-QByteArray RarcFile::getFileContents(const QString& filePath)
+std::vector<uint8_t> RarcFile::getFileContents(const QString& filePath)
 {
     FileEntry* fileEntry = fileEntries[pathToKey(filePath)];
 
-    if(fileEntry->data != nullptr)
+    if(!fileEntry->data.empty())
         return fileEntry->data;
 
     file->position(fileEntry->dataOffset);

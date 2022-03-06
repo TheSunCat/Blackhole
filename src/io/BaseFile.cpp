@@ -133,7 +133,7 @@ QString BaseFile::readString(uint32_t length, const char* enc) const
     if(strcmp(enc, "ASCII") == 0)
         enc = "UTF-8";
 
-    QByteArray bytes;
+    std::vector<uint8_t> bytes;
     for(int i = 0; i < length || length == 0; i++)
     {
         uint8_t byte = readByte();
@@ -149,14 +149,15 @@ QString BaseFile::readString(uint32_t length, const char* enc) const
 
     }
 
+    const QByteArray byteArray = QByteArray::fromRawData((const char*)bytes.data(), bytes.size());
 
     QTextDecoder* dc = QTextCodec::codecForName(enc)->makeDecoder();
-    return dc->toUnicode(bytes);
+    return dc->toUnicode(byteArray);
 }
 
-QByteArray BaseFile::readBytes(uint32_t count) const
+std::vector<uint8_t> BaseFile::readBytes(uint32_t count) const
 {
-    QByteArray ret(count, 0);
+    std::vector<uint8_t> ret(count);
 
     for(int i = 0; i < count; i++)
         ret[i] = readByte();
@@ -240,25 +241,24 @@ int BaseFile::writeString(const QString& str, const char* enc)
     QTextEncoder* en = QTextCodec::codecForName(enc)->makeEncoder();
     QByteArray strBytes = en->fromUnicode(str);
 
-    // not using QByteArray::replace because we want to set m_modifiedFlag
     for(auto& byte : strBytes)
         writeByte(byte);
 
     return strBytes.length();
 }
 
-void BaseFile::writeBytes(QByteArray bytes)
+void BaseFile::writeBytes(const std::vector<uint8_t>& bytes)
 {
     for(auto& byte : bytes)
         writeByte(byte);
 }
 
-QByteArray BaseFile::getContents() const
+const std::vector<uint8_t>& BaseFile::getContents() const
 {
     return m_contents;
 }
 
-void BaseFile::setContents(QByteArray bytes)
+void BaseFile::setContents(const std::vector<uint8_t>& bytes)
 {
     m_contents = bytes;
 }

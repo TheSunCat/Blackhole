@@ -133,7 +133,7 @@ void GalaxyRenderer::resizeGL(int w, int h)
 
 void GalaxyRenderer::mouseMoveEvent(QMouseEvent* event)
 {
-    glm::vec2 mousePos = glm::vec2(event->position().x(), event->position().y());
+    glm::vec2 mousePos = glm::vec2(event->pos().x(), event->pos().y());
     uint32_t mouseButtons = event->buttons();
 
     glm::vec2 mouseDelta = mousePos - m_lastMousePos;
@@ -191,7 +191,7 @@ void GalaxyRenderer::wheelEvent(QWheelEvent* event)
 
 void GalaxyRenderer::mousePressEvent(QMouseEvent* event)
 {
-    m_lastMousePos = glm::vec2(event->x(), event->y());
+    m_lastMousePos = glm::vec2(event->pos().x(), event->pos().y());
     m_mouseDragging = true;
 }
 

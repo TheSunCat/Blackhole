@@ -2,8 +2,7 @@
 
 #include "Constants.h"
 
-#include <QByteArray>
-
+#include <vector>
 #include <QString>
 
 class BaseFile
@@ -13,7 +12,7 @@ protected:
 
     mutable uint32_t m_curPos = 0;
 
-    QByteArray m_contents;
+    std::vector<uint8_t> m_contents;
     bool m_modifiedFlag = false;
 public:
 
@@ -37,15 +36,15 @@ public:
     uint32_t readInt() const;
     float readFloat() const;
     QString readString(uint32_t length, const char* enc = "ASCII") const;
-    QByteArray readBytes(uint32_t count) const;
+    std::vector<uint8_t> readBytes(uint32_t count) const;
 
     void writeByte(uint8_t val);
     void writeShort(uint16_t val);
     void writeInt(uint32_t val);
     void writeFloat(float val);
     int writeString(const QString& str, const char* enc = "ASCII");
-    void writeBytes(QByteArray bytes);
+    void writeBytes(const std::vector<uint8_t>& bytes);
 
-    virtual QByteArray getContents() const;
-    virtual void setContents(QByteArray bytes);
+    virtual const std::vector<uint8_t>& getContents() const;
+    virtual void setContents(const std::vector<uint8_t>& bytes);
 };

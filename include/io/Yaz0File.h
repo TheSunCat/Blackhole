@@ -3,7 +3,7 @@
 #include "MemoryFile.h"
 #include "ExternalFile.h"
 
-#include <QByteArray>
+#include <vector>
 
 class ExternalFile;
 
@@ -17,13 +17,13 @@ class Yaz0File : public MemoryFile
         uint32_t length = 0;
     };
 
-    static Occurrence findOccurrence(const QByteArray& data, uint32_t pos);
+    static Occurrence findOccurrence(const std::vector<uint8_t>& data, uint32_t pos);
 
 public:
     Yaz0File(QString filePath);
 
     void save() override;
 
-    static QByteArray decompress(const QByteArray& data);
-    static QByteArray compress(const QByteArray& data);
+    static std::vector<uint8_t> decompress(const std::vector<uint8_t>& data);
+    static std::vector<uint8_t> compress(const std::vector<uint8_t>& data);
 };

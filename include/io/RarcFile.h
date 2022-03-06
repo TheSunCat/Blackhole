@@ -1,6 +1,5 @@
 #pragma once
 #include <QString>
-#include <QByteArray>
 #include <QStringList>
 
 #include <unordered_map>
@@ -35,7 +34,7 @@ class RarcFile
         QString name;
         QString fullName;
 
-        QByteArray data;
+        std::vector<uint8_t> data;
     };
 
     struct DirEntry {
@@ -79,6 +78,6 @@ public:
     void rmFile(const QString& filePath);
 
     BaseFile* openFile(const QString& filePath);
-    QByteArray getFileContents(const QString& filePath);
+    std::vector<uint8_t> getFileContents(const QString& filePath);
     void reinsertFile(const InRarcFile& file);
 };

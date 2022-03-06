@@ -11,10 +11,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6Widgets CONFIG REQUIRED)
-find_package(Qt6 COMPONENTS OpenGL REQUIRED)
-find_package(Qt6 COMPONENTS OpenGLWidgets REQUIRED)
-find_package(Qt6 COMPONENTS Core5Compat REQUIRED)
+find_package(Qt5Widgets CONFIG REQUIRED)
+find_package(Qt5OpenGL)
+#find_package(Qt5 COMPONENTS OpenGL REQUIRED)
+#find_package(Qt5 COMPONENTS OpenGLWidgets REQUIRED)
+#find_package(Qt5 COMPONENTS Core5Compat REQUIRED)
 
 add_subdirectory(glm)
 
@@ -66,7 +67,8 @@ set(blackhole_SRC
 )
 
 add_executable(blackhole ${blackhole_SRC})
-target_link_libraries(blackhole Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets Qt6::Core5Compat Threads::Threads)
+qt5_use_modules(blackhole Widgets OpenGL)
+target_link_libraries(blackhole ${QT_LIBRARIES} ${OPENGL_LIBRARIES} Threads::Threads)
 
 target_include_directories(blackhole PRIVATE include libs glm)
 set_property(TARGET blackhole PROPERTY CXX_STANDARD 20)

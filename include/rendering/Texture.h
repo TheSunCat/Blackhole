@@ -3,13 +3,14 @@
 #include "rendering/GX.h"
 
 #include <functional>
+#include <vector>
 
 class Texture
 {
 public:
     QString type = "RGBA";
     uint16_t width, height;
-    QByteArray pixels;
+    std::vector<uint8_t> pixels;
 
     static Texture fromBTI(const GX::BTI_Texture& bti);
 private:
@@ -25,7 +26,7 @@ private:
     static Texture decode_CMPR (const GX::BTI_Texture& bti);    // 0xE
 
     // helper functions
-    typedef std::function<void(QByteArray& pixels, uint32_t& dstOffset)> DecoderFunction;
+    typedef std::function<void(std::vector<uint8_t>& pixels, uint32_t& dstOffset)> DecoderFunction;
 
     static Texture decode_Tiled(const GX::BTI_Texture& bti, uint32_t bw, uint32_t bh, DecoderFunction decoderFunc);
 

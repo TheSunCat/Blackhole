@@ -5,14 +5,16 @@ ExternalFile::ExternalFile(const QString& filePath)
 {
     // don't open automatically so as to allow Dolphin to work
     m_file.open(QIODevice::ReadOnly);
-    m_contents = m_file.readAll();
+    QByteArray bytes = m_file.readAll();
+
+    m_contents = std::vector<uint8_t>(bytes.begin(), bytes.end());
     m_file.close();
 }
 
 void ExternalFile::save()
 {
     m_file.open(QIODevice::WriteOnly);
-    m_file.write(m_contents);
+    m_file.write(QByteArray((const char*)m_contents.data(), m_contents.size()));
     m_file.close();
 }
 

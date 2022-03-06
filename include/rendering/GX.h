@@ -2,7 +2,10 @@
 
 #include <QString>
 #include <QColor>
+
 #include <glm/glm.hpp>
+#include <vector>
+#include <span>
 
 namespace GX
 {
@@ -36,8 +39,8 @@ enum class WrapMode {
 };
 
 enum class TexFilter {
-    NEAR = 0,               // Point sampling, no mipmap
-    LINEAR = 1,             // Bilinear filtering, no mipmap
+    kNEAR = 0,               // Point sampling, no mipmap
+    kLINEAR = 1,             // Bilinear filtering, no mipmap
     NEAR_MIP_NEAR = 2,      // Point sampling, discrete mipmap
     LIN_MIP_NEAR = 3,       // Bilinear filtering, discrete mipmap
     NEAR_MIP_LIN = 4,       // Point sampling, linear mipmap
@@ -679,10 +682,10 @@ struct BTI_Texture {
 
     uint8_t mipCount;
 
-    QByteArray data;
+    std::span<const uint8_t> data;
 
     TexPalette paletteFormat;
-    QByteArray paletteData;
+    std::span<const uint8_t> paletteData;
 };
 
 void autoOptimizeMaterial(Material& mat);

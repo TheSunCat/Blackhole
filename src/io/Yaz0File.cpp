@@ -12,20 +12,20 @@ Yaz0File::Yaz0File(QString filePath)
 
 void Yaz0File::save()
 {
-    QByteArray compressedBytes = compress(m_contents);
+    std::vector<uint8_t> compressedBytes = compress(m_contents);
 
     m_backend.setContents(compressedBytes);
     m_backend.save();
     // TODO release storage here maybe
 }
 
-QByteArray Yaz0File::decompress(const QByteArray& data)
+std::vector<uint8_t> Yaz0File::decompress(const std::vector<uint8_t>& data)
 {
-    if(!data.startsWith("Yaz0"))
+    if(!(data[0] == 'Y' && data[1] == 'a' && data[2] == 'z' && data[3] == '0'))
         return data; // TODO error message?
 
     uint32_t fullSize = ((data[4] & 0xFF) << 24) | ((data[5] & 0xFF) << 16) | ((data[6] & 0xFF) << 8) | (data[7] & 0xFF);
-    QByteArray ret(fullSize, 0);
+    std::vector<uint8_t> ret(fullSize);
 
     int inPos = 16, outPos = 0;
     while(outPos < fullSize)
@@ -67,13 +67,13 @@ QByteArray Yaz0File::decompress(const QByteArray& data)
     return ret;
 }
 
-QByteArray Yaz0File::compress(const QByteArray& data)
+std::vector<uint8_t> Yaz0File::compress(const std::vector<uint8_t>& data)
 {
     size_t compressedSize = 16 + data.size() + (data.size() / 8);
 
-    QByteArray ret(compressedSize, 0);
+    std::vector<uint8_t> ret(compressedSize);
 
-    ret.replace(0, 4, "Yaz0");
+    ret[0] = 'Y'; ret[1] = 'a'; ret[2] = 'z'; ret[3] = '0';
 
     uint32_t fullSize = data.size();
     ret[4] = (fullSize >> 24) & 0xFF;
@@ -144,7 +144,7 @@ QByteArray Yaz0File::compress(const QByteArray& data)
     return ret;
 }
 
-Yaz0File::Occurrence Yaz0File::findOccurrence(const QByteArray& data, uint32_t pos)
+Yaz0File::Occurrence Yaz0File::findOccurrence(const std::vector<uint8_t>& data, uint32_t pos)
 {
     Occurrence ret;
 

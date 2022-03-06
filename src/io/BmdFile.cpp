@@ -1,5 +1,7 @@
 #include "io/BmdFile.h"
 
+#include "Util.h"
+
 #include <stack>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
@@ -1312,14 +1314,14 @@ void BmdFile::readTEX1()
         int32_t textureDataIndex = -1;
 
         // Try to find existing texture data
-        QByteArray& textureData = btiTexture.data;
-        if(!textureData.isNull())
+        const auto& textureData = btiTexture.data;
+        if(!textureData.empty())
         {
             for(uint32_t j = 0; j < m_textures.size(); j++)
             {
                 const GX::BTI_Texture& curTex = m_textures[j];
 
-                if(curTex.data.isNull())
+                if(curTex.data.empty())
                     continue;
 
                 if(curTex.data == textureData)
@@ -1383,14 +1385,13 @@ GX::BTI_Texture BmdFile::readBTI(uint32_t absoluteStartIndex, const QString& nam
 
     assert(minLOD == 0);
 
-    // TODO is this actually making a "view", or is sliced(pos) making a copy of it?
-    QByteArray data;
+    std::span<const uint8_t> data;
     if(dataOffset != 0)
-        data = file->getContents().sliced(absoluteStartIndex + dataOffset);
+        data = std::span<const uint8_t>(file->getContents().data() + absoluteStartIndex + dataOffset, file->getLength() - (absoluteStartIndex + dataOffset));
 
-    QByteArray paletteData;
+    std::span<const uint8_t> paletteData;
     if(paletteOffset != 0)
-        paletteData = file->getContents().sliced(absoluteStartIndex + paletteOffset, paletteCount * 2);
+        paletteData = std::span<const uint8_t>(file->getContents().data() + absoluteStartIndex + paletteOffset, absoluteStartIndex + paletteOffset + paletteCount * 2);
 
     return {
         name, format, width, height,

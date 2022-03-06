@@ -4,7 +4,7 @@
 
 Texture Texture::fromBTI(const GX::BTI_Texture& bti)
 {
-    if(bti.data.isNull())
+    if(bti.data.empty())
         return decode_Dummy(bti);
 
     switch(bti.format)
@@ -43,17 +43,17 @@ Texture Texture::decode_Dummy(const GX::BTI_Texture& bti)
     Texture ret;
     ret.width = bti.width;
     ret.height = bti.height;
-    ret.pixels = QByteArray(bti.width * bti.height * 4, 0xFF);
+    ret.pixels = std::vector<uint8_t>(bti.width * bti.height * 4, 0xFF);
 
     return ret;
 }
 
 Texture Texture::decode_I4(const GX::BTI_Texture& bti)
 {
-    QByteArrayView data = bti.data;
+    const std::span<const uint8_t>& data = bti.data;
     uint32_t srcOffset = 0;
 
-    return decode_Tiled(bti, 8, 8, [&](QByteArray& pixels, uint32_t& dstOffset) {
+    return decode_Tiled(bti, 8, 8, [&](std::vector<uint8_t>& pixels, uint32_t& dstOffset) {
         uint8_t ii = data[srcOffset >> 1];
         uint8_t i4 = ii >> ((srcOffset & 1) ? 0 : 4) & 0x0F;
         uint16_t i = expand4to8(i4);
@@ -69,10 +69,10 @@ Texture Texture::decode_I4(const GX::BTI_Texture& bti)
 
 Texture Texture::decode_I8(const GX::BTI_Texture& bti)
 {
-    QByteArrayView data = bti.data;
+    const std::span<const uint8_t>& data = bti.data;
     uint32_t srcOffset = 0;
 
-    return decode_Tiled(bti, 8, 4, [&](QByteArray& pixels, uint32_t& dstOffset) {
+    return decode_Tiled(bti, 8, 4, [&](std::vector<uint8_t>& pixels, uint32_t& dstOffset) {
         uint8_t i = data[srcOffset];
 
         pixels[dstOffset + 0] = i;
@@ -86,10 +86,10 @@ Texture Texture::decode_I8(const GX::BTI_Texture& bti)
 
 Texture Texture::decode_IA4(const GX::BTI_Texture& bti)
 {
-    QByteArrayView data = bti.data;
+    const std::span<const uint8_t>& data = bti.data;
     uint32_t srcOffset = 0;
 
-    return decode_Tiled(bti, 8, 4, [&](QByteArray& pixels, uint32_t& dstOffset) {
+    return decode_Tiled(bti, 8, 4, [&](std::vector<uint8_t>& pixels, uint32_t& dstOffset) {
         uint8_t ia = data[srcOffset];
         uint8_t a = expand4to8(ia >> 4);
         uint8_t i = expand4to8(ia & 0x0F);
@@ -105,10 +105,10 @@ Texture Texture::decode_IA4(const GX::BTI_Texture& bti)
 
 Texture Texture::decode_IA8(const GX::BTI_Texture& bti)
 {
-    QByteArrayView data = bti.data;
+    const std::span<const uint8_t>& data = bti.data;
     uint32_t srcOffset = 0;
 
-    return decode_Tiled(bti, 4, 4, [&](QByteArray& pixels, uint32_t& dstOffset) {
+    return decode_Tiled(bti, 4, 4, [&](std::vector<uint8_t>& pixels, uint32_t& dstOffset) {
         uint8_t a = data[srcOffset];
         uint8_t i = data[srcOffset + 1];
 
@@ -123,10 +123,10 @@ Texture Texture::decode_IA8(const GX::BTI_Texture& bti)
 
 Texture Texture::decode_RGB565(const GX::BTI_Texture& bti)
 {
-    QByteArrayView data = bti.data;
+    const std::span<const uint8_t>& data = bti.data;
     uint32_t srcOffset = 0;
 
-    return decode_Tiled(bti, 4, 4, [&](QByteArray& pixels, uint32_t& dstOffset) {
+    return decode_Tiled(bti, 4, 4, [&](std::vector<uint8_t>& pixels, uint32_t& dstOffset) {
         uint16_t p = data[srcOffset] << 8 & data[srcOffset + 1]; // TODO little-endian
 
         pixels[dstOffset + 0] = expand5to8((p >> 11) & 0x1F);
@@ -140,10 +140,10 @@ Texture Texture::decode_RGB565(const GX::BTI_Texture& bti)
 
 Texture Texture::decode_RGB5A3(const GX::BTI_Texture& bti)
 {
-    QByteArrayView data = bti.data;
+    const std::span<const uint8_t>& data = bti.data;
     uint32_t srcOffset = 0;
 
-    return decode_Tiled(bti, 4, 4, [&](QByteArray& pixels, uint32_t& dstOffset) {
+    return decode_Tiled(bti, 4, 4, [&](std::vector<uint8_t>& pixels, uint32_t& dstOffset) {
         uint16_t p = data[srcOffset] << 8 & data[srcOffset + 1]; // TODO little-endian
 
         if (p & 0x8000) {
@@ -166,14 +166,14 @@ Texture Texture::decode_RGB5A3(const GX::BTI_Texture& bti)
 
 Texture Texture::decode_RGBA8(const GX::BTI_Texture& bti)
 {
-    QByteArrayView data = bti.data;
+   const std::span<const uint8_t>& data = bti.data;
 
     uint32_t srcOffset = 0;
 
     constexpr uint32_t bw = 4;
     constexpr uint32_t bh = 4;
 
-    QByteArray pixels(bti.width * bti.height * 4, 0x00);
+    std::vector<uint8_t> pixels(bti.width * bti.height * 4, 0x00);
 
     for(uint32_t yy = 0; yy < bti.height; yy += bh)
     {
@@ -212,7 +212,7 @@ Texture Texture::decode_RGBA8(const GX::BTI_Texture& bti)
 Texture Texture::decode_CMPR(const GX::BTI_Texture& bti)
 {
     // GX's CMPR format is S3TC but using GX's tiled addressing.
-    QByteArray pixelsArray(bti.width * bti.height * 4, 0x00);
+    std::vector<uint8_t> pixelsArray(bti.width * bti.height * 4, 0x00);
     uint8_t* pixels = (uint8_t*)pixelsArray.data();
 
     uint8_t* data = (uint8_t*)bti.data.data();
@@ -296,7 +296,7 @@ Texture Texture::decode_CMPR(const GX::BTI_Texture& bti)
 
 Texture Texture::decode_Tiled(const GX::BTI_Texture& bti, uint32_t bw, uint32_t bh, Texture::DecoderFunction decoderFunc)
 {
-    QByteArray pixels(bti.width * bti.height * 4, 0x00);
+    std::vector<uint8_t> pixels(bti.width * bti.height * 4, 0x00);
 
     for (uint32_t yy = 0; yy < bti.height; yy += bh) {
         for (uint32_t xx = 0; xx < bti.width; xx += bw) {

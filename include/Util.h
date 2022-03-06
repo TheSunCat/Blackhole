@@ -1,5 +1,6 @@
 #pragma once
 
+#include <span>
 #include <vector>
 #include <string>
 #include <QString>
@@ -34,6 +35,16 @@ public:
         return *m_it;
     }
 };
+
+namespace std {
+
+    template <typename T, size_t Extent>
+    bool operator==(span<T, Extent> lhs, span<T> rhs)
+    {
+        return std::equal(begin(lhs), end(lhs), begin(rhs), end(rhs));
+    }
+
+} // namespace std
 
 QString absolutePath(const QString& gamePath);
 
