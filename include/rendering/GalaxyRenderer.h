@@ -5,7 +5,12 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLFunctions_3_3_Core>
 
+#ifdef __APPLE__
+#include "extern/jthread.hpp" // Apple sucks
+#else
 #include <thread>
+#endif
+
 #include <iostream>
 
 #include "rendering/Camera.h"
