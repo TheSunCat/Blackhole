@@ -51,12 +51,12 @@ layout(std140) uniform ub_MaterialParams {
     QString(R"(
 };
 // Expected to change with each shape draw.
-layout(std140) uniform ub_DrawParams {\n") +
+layout(std140) uniform ub_DrawParams {)") +
 
     QString(material.usePnMtxIdx ?
     "\nMat4x3 u_PosMtx[10];" : "\nMat4x3 u_PosMtx[1];") +
 
-    QString("
+    QString(R"(
 };
 uniform sampler2D u_Texture0;
 uniform sampler2D u_Texture1;
