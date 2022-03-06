@@ -9,10 +9,11 @@ namespace GXShaderLibrary
     constexpr int EFB_WIDTH = 640;
     constexpr int EFB_HEIGHT= 528;
 
-    constexpr const char* tevOverflow = "\
-float TevOverflow(float a) { return float(int(a * 255.0) & 255) / 255.0; }\
-vec3 TevOverflow(vec3 a) { return vec3(TevOverflow(a.r), TevOverflow(a.g), TevOverflow(a.b)); }\
-vec4 TevOverflow(vec4 a) { return vec4(TevOverflow(a.r), TevOverflow(a.g), TevOverflow(a.b), TevOverflow(a.a)); }";
+    constexpr const char* tevOverflow = R"(
+float TevOverflow(float a) { return float(int(a * 255.0) & 255) / 255.0; }
+vec3 TevOverflow(vec3 a) { return vec3(TevOverflow(a.r), TevOverflow(a.g), TevOverflow(a.b)); }
+vec4 TevOverflow(vec4 a) { return vec4(TevOverflow(a.r), TevOverflow(a.g), TevOverflow(a.b), TevOverflow(a.a)); }
+)";
 
     enum class VertexAttributeInput {
         // TEXnMTXIDX are packed specially because of GL limitations.
@@ -194,6 +195,25 @@ vec4 TevOverflow(vec4 a) { return vec4(TevOverflow(a.r), TevOverflow(a.g), TevOv
         return true;
     }
 
-    QString generateBindingsDefinition(Material material);
+    QString generateBindingsDefinition(Material& material);
+
+    uint32_t getMaterialParamsBlockSize(Material& material);
+    uint32_t getDrawParamsBlockSize(Material& material);
+
+    class GX_Program // TODO extends DeviceProgram gx_material.ts
+    {
+    public:
+        uint32_t ub_SceneParams = 0;       // TODO static + what size?
+        uint32_t ub_MaterialParams = 1;    // TODO static + what size?
+        uint32_t ub_DrawParams = 2;        // TODO static + what size?
+
+        QString name;
+
+        GX_Program(Material& material);
+
+    private:
+        QString generateFloat(float f);
+        QString generateMaterialSource(ColorChannelControl chan, uint32_t i);
+    };
 
 }; // namespace GXShaderLibrary

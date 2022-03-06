@@ -8,7 +8,7 @@
 #include <vector>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
+#include "extern/stb_image_write.h"
 
 ObjectRenderer::ObjectRenderer(BaseObject* obj)
         : m_object(obj), m_translation(obj->m_pos),
