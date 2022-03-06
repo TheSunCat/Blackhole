@@ -36,19 +36,19 @@ enum class WrapMode {
 };
 
 enum class TexFilter {
-    NEAR = 0, /*!< Point sampling, no mipmap */
-    LINEAR = 1, /*!< Bilinear filtering, no mipmap */
-    NEAR_MIP_NEAR = 2, /*!< Point sampling, discrete mipmap */
-    LIN_MIP_NEAR = 3, /*!< Bilinear filtering, discrete mipmap */
-    NEAR_MIP_LIN = 4, /*!< Point sampling, linear mipmap */
-    LIN_MIP_LIN = 5, /*!< Trilinear filtering */
+    NEAR = 0,               // Point sampling, no mipmap
+    LINEAR = 1,             // Bilinear filtering, no mipmap
+    NEAR_MIP_NEAR = 2,      // Point sampling, discrete mipmap
+    LIN_MIP_NEAR = 3,       // Bilinear filtering, discrete mipmap
+    NEAR_MIP_LIN = 4,       // Point sampling, linear mipmap
+    LIN_MIP_LIN = 5,        // Trilinear filtering
 };
 
 enum class CullMode {
-    NONE = 0, /*!< Do not cull any primitives. */
-    FRONT = 1, /*!< Cull front-facing primitives. */
-    BACK = 2, /*!< Cull back-facing primitives. */
-    ALL = 3, /*!< Cull all primitives. */
+    NONE = 0,               // Do not cull any primitives.
+    FRONT = 1,              // Cull front-facing primitives.
+    BACK = 2,               // Cull back-facing primitives.
+    ALL = 3,                // Cull all primitives.
 };
 
 enum class ColorSrc {
@@ -168,7 +168,7 @@ enum class TexGenMatrix {
     TEXMTX8 = 54,
     TEXMTX9 = 57,
 
-    /* Clever games can use PNMTX as inputs to texgen. */
+    // Clever games can use PNMTX as inputs to texgen.
     PNMTX0 = 0,
     PNMTX1 = 3,
     PNMTX2 = 6,
@@ -251,33 +251,33 @@ enum class TevScale {
 };
 
 enum class CC {
-    CPREV = 0, /*!< Use the color value from previous TEV stage */
-    APREV = 1, /*!< Use the alpha value from previous TEV stage */
-    C0 = 2, /*!< Use the color value from the color/output register 0 */
-    A0 = 3, /*!< Use the alpha value from the color/output register 0 */
-    C1 = 4, /*!< Use the color value from the color/output register 1 */
-    A1 = 5, /*!< Use the alpha value from the color/output register 1 */
-    C2 = 6, /*!< Use the color value from the color/output register 2 */
-    A2 = 7, /*!< Use the alpha value from the color/output register 2 */
-    TEXC = 8, /*!< Use the color value from texture */
-    TEXA = 9, /*!< Use the alpha value from texture */
-    RASC = 10, /*!< Use the color value from rasterizer */
-    RASA = 11, /*!< Use the alpha value from rasterizer */
+    CPREV = 0,              // Use the color value from previous TEV stage
+    APREV = 1,              // Use the alpha value from previous TEV stage
+    C0 = 2,                 // Use the color value from the color/output register 0
+    A0 = 3,                 // Use the alpha value from the color/output register 0
+    C1 = 4,                 // Use the color value from the color/output register 1
+    A1 = 5,                 // Use the alpha value from the color/output register 1
+    C2 = 6,                 // Use the color value from the color/output register 2
+    A2 = 7,                 // Use the alpha value from the color/output register 2
+    TEXC = 8,               // Use the color value from texture
+    TEXA = 9,               // Use the alpha value from texture
+    RASC = 10,              // Use the color value from rasterizer
+    RASA = 11,              // Use the alpha value from rasterizer
     ONE = 12,
     HALF = 13,
     KONST = 14,
-    ZERO = 15, /*!< Use to pass zero value */
+    ZERO = 15,              // Use to pass zero value
 };
 
 enum class CA {
-    APREV = 0, /*!< Use the alpha value from previous TEV stage */
-    A0 = 1, /*!< Use the alpha value from the color/output register 0 */
-    A1 = 2, /*!< Use the alpha value from the color/output register 1 */
-    A2 = 3, /*!< Use the alpha value from the color/output register 2 */
-    TEXA = 4, /*!< Use the alpha value from texture */
-    RASA = 5, /*!< Use the alpha value from rasterizer */
+    APREV = 0,              // Use the alpha value from previous TEV stage
+    A0 = 1,                 // Use the alpha value from the color/output register 0
+    A1 = 2,                 // Use the alpha value from the color/output register 1
+    A2 = 3,                 // Use the alpha value from the color/output register 2
+    TEXA = 4,               // Use the alpha value from texture
+    RASA = 5,               // Use the alpha value from rasterizer
     KONST = 6,
-    ZERO = 7, /*!< Use to pass zero value */
+    ZERO = 7,               // Use to pass zero value
 };
 
 enum class Register {
@@ -333,61 +333,61 @@ enum class RasColorChannelID {
 };
 
 enum class KonstColorSel {
-    KCSEL_1   = 0x00, /*!< constant 1.0 */
-    KCSEL_7_8 = 0x01, /*!< constant 7/8 */
-    KCSEL_6_8 = 0x02, /*!< constant 6/8 */
-    KCSEL_5_8 = 0x03, /*!< constant 5/8 */
-    KCSEL_4_8 = 0x04, /*!< constant 4/8 */
-    KCSEL_3_8 = 0x05, /*!< constant 3/8 */
-    KCSEL_2_8 = 0x06, /*!< constant 2/8 */
-    KCSEL_1_8 = 0x07, /*!< constant 1/8 */
-    KCSEL_K0  = 0x0C, /*!< K0[RGB] register */
-    KCSEL_K1  = 0x0D, /*!< K1[RGB] register */
-    KCSEL_K2  = 0x0E, /*!< K2[RGB] register */
-    KCSEL_K3  = 0x0F, /*!< K3[RGB] register */
-    KCSEL_K0_R = 0x10, /*!< K0[RRR] register */
-    KCSEL_K1_R = 0x11, /*!< K1[RRR] register */
-    KCSEL_K2_R = 0x12, /*!< K2[RRR] register */
-    KCSEL_K3_R = 0x13, /*!< K3[RRR] register */
-    KCSEL_K0_G = 0x14, /*!< K0[GGG] register */
-    KCSEL_K1_G = 0x15, /*!< K1[GGG] register */
-    KCSEL_K2_G = 0x16, /*!< K2[GGG] register */
-    KCSEL_K3_G = 0x17, /*!< K3[GGG] register */
-    KCSEL_K0_B = 0x18, /*!< K0[BBB] register */
-    KCSEL_K1_B = 0x19, /*!< K1[BBB] register */
-    KCSEL_K2_B = 0x1A, /*!< K2[BBB] register */
-    KCSEL_K3_B = 0x1B, /*!< K3[RBB] register */
-    KCSEL_K0_A = 0x1C, /*!< K0[AAA] register */
-    KCSEL_K1_A = 0x1D, /*!< K1[AAA] register */
-    KCSEL_K2_A = 0x1E, /*!< K2[AAA] register */
-    KCSEL_K3_A = 0x1F, /*!< K3[AAA] register */
+    KCSEL_1   = 0x00,       // constant 1.0
+    KCSEL_7_8 = 0x01,       // constant 7/8
+    KCSEL_6_8 = 0x02,       // constant 6/8
+    KCSEL_5_8 = 0x03,       // constant 5/8
+    KCSEL_4_8 = 0x04,       // constant 4/8
+    KCSEL_3_8 = 0x05,       // constant 3/8
+    KCSEL_2_8 = 0x06,       // constant 2/8
+    KCSEL_1_8 = 0x07,       // constant 1/8
+    KCSEL_K0  = 0x0C,       // K0[RGB] register
+    KCSEL_K1  = 0x0D,       // K1[RGB] register
+    KCSEL_K2  = 0x0E,       // K2[RGB] register
+    KCSEL_K3  = 0x0F,       // K3[RGB] register
+    KCSEL_K0_R = 0x10,      //  K0[RRR] register
+    KCSEL_K1_R = 0x11,      //  K1[RRR] register
+    KCSEL_K2_R = 0x12,      //  K2[RRR] register
+    KCSEL_K3_R = 0x13,      //  K3[RRR] register
+    KCSEL_K0_G = 0x14,      //  K0[GGG] register
+    KCSEL_K1_G = 0x15,      //  K1[GGG] register
+    KCSEL_K2_G = 0x16,      //  K2[GGG] register
+    KCSEL_K3_G = 0x17,      //  K3[GGG] register
+    KCSEL_K0_B = 0x18,      //  K0[BBB] register
+    KCSEL_K1_B = 0x19,      //  K1[BBB] register
+    KCSEL_K2_B = 0x1A,      //  K2[BBB] register
+    KCSEL_K3_B = 0x1B,      //  K3[RBB] register
+    KCSEL_K0_A = 0x1C,      //  K0[AAA] register
+    KCSEL_K1_A = 0x1D,      //  K1[AAA] register
+    KCSEL_K2_A = 0x1E,      //  K2[AAA] register
+    KCSEL_K3_A = 0x1F,      //  K3[AAA] register
 };
 
 enum class KonstAlphaSel {
-    KASEL_1    = 0x00, /*!< constant 1.0 */
-    KASEL_7_8  = 0x01, /*!< constant 7/8 */
-    KASEL_6_8  = 0x02, /*!< constant 6/8 */
-    KASEL_5_8  = 0x03, /*!< constant 5/8 */
-    KASEL_4_8  = 0x04, /*!< constant 4/8 */
-    KASEL_3_8  = 0x05, /*!< constant 3/8 */
-    KASEL_2_8  = 0x06, /*!< constant 2/8 */
-    KASEL_1_8  = 0x07, /*!< constant 1/8 */
-    KASEL_K0_R = 0x10, /*!< K0[R] register */
-    KASEL_K1_R = 0x11, /*!< K1[R] register */
-    KASEL_K2_R = 0x12, /*!< K2[R] register */
-    KASEL_K3_R = 0x13, /*!< K3[R] register */
-    KASEL_K0_G = 0x14, /*!< K0[G] register */
-    KASEL_K1_G = 0x15, /*!< K1[G] register */
-    KASEL_K2_G = 0x16, /*!< K2[G] register */
-    KASEL_K3_G = 0x17, /*!< K3[G] register */
-    KASEL_K0_B = 0x18, /*!< K0[B] register */
-    KASEL_K1_B = 0x19, /*!< K1[B] register */
-    KASEL_K2_B = 0x1A, /*!< K2[B] register */
-    KASEL_K3_B = 0x1B, /*!< K3[B] register */
-    KASEL_K0_A = 0x1C, /*!< K0[A] register */
-    KASEL_K1_A = 0x1D, /*!< K1[A] register */
-    KASEL_K2_A = 0x1E, /*!< K2[A] register */
-    KASEL_K3_A = 0x1F, /*!< K3[A] register */
+    KASEL_1    = 0x00,      //  constant 1.0
+    KASEL_7_8  = 0x01,      //  constant 7/8
+    KASEL_6_8  = 0x02,      //  constant 6/8
+    KASEL_5_8  = 0x03,      //  constant 5/8
+    KASEL_4_8  = 0x04,      //  constant 4/8
+    KASEL_3_8  = 0x05,      //  constant 3/8
+    KASEL_2_8  = 0x06,      //  constant 2/8
+    KASEL_1_8  = 0x07,      //  constant 1/8
+    KASEL_K0_R = 0x10,      //  K0[R] register
+    KASEL_K1_R = 0x11,      //  K1[R] register
+    KASEL_K2_R = 0x12,      //  K2[R] register
+    KASEL_K3_R = 0x13,      //  K3[R] register
+    KASEL_K0_G = 0x14,      //  K0[G] register
+    KASEL_K1_G = 0x15,      //  K1[G] register
+    KASEL_K2_G = 0x16,      //  K2[G] register
+    KASEL_K3_G = 0x17,      //  K3[G] register
+    KASEL_K0_B = 0x18,      //  K0[B] register
+    KASEL_K1_B = 0x19,      //  K1[B] register
+    KASEL_K2_B = 0x1A,      //  K2[B] register
+    KASEL_K3_B = 0x1B,      //  K3[B] register
+    KASEL_K0_A = 0x1C,      //  K0[A] register
+    KASEL_K1_A = 0x1D,      //  K1[A] register
+    KASEL_K2_A = 0x1E,      //  K2[A] register
+    KASEL_K3_A = 0x1F,      //  K3[A] register
 };
 
 enum class IndTexBiasSel {
@@ -409,10 +409,10 @@ enum class IndTexAlphaSel {
 };
 
 enum class IndTexFormat {
-    _8 = 0, // 8-bit texture offset
-    _5 = 1, // 5-bit texture offset
-    _4 = 2, // 4-bit texture offset
-    _3 = 3, // 3-bit texture offset
+    _8 = 0,                 // 8-bit texture offset
+    _5 = 1,                 // 5-bit texture offset
+    _4 = 2,                 // 4-bit texture offset
+    _3 = 3,                 // 3-bit texture offset
 };
 
 enum class IndTexWrap {

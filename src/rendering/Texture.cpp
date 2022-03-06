@@ -1,5 +1,7 @@
 #include "rendering/Texture.h"
 
+#include <array>
+
 Texture Texture::fromBTI(const GX::BTI_Texture& bti)
 {
     if(bti.data.isNull())

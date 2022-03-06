@@ -4,6 +4,10 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
+#ifndef M_PI
+#define M_PI (3.14159265358979323846)
+#endif
+
 BmdFile::BmdFile(BaseFile* inRarcFile) : file(inRarcFile)
 {
     file->setBigEndian(true);
