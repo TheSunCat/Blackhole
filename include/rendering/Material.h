@@ -215,6 +215,8 @@ vec4 TevOverflow(vec4 a) { return vec4(TevOverflow(a.r), TevOverflow(a.g), TevOv
         QString generateFloat(float f);
         QString generateMaterialSource(ColorChannelControl chan, uint32_t i);
         QString generateAmbientSource(ColorChannelControl chan, uint32_t i);
+        QString generateLightDiffFn(ColorChannelControl chan, QString& lightName);
+        QString generateLightAttnFn(ColorChannelControl chan, QString& lightName);
     };
 
 }; // namespace GXShaderLibrary

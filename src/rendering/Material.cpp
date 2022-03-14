@@ -118,14 +118,49 @@ QString GXShaderLibrary::GX_Program::generateMaterialSource(ColorChannelControl 
     return "";
 }
 
-/*QString generateAmbientSource(ColorChannelControl chan, uint32_t i) {
-    if (this.hacks !== null && this.hacks.disableVertexColors && chan.ambColorSource === GX.ColorSrc.VTX)
-        return `vec4(1.0, 1.0, 1.0, 1.0)`;
+QString GXShaderLibrary::GX_Program::GX_ProgramgenerateAmbientSource(ColorChannelControl chan, uint32_t i) {
+    //if (this.hacks !== null && this.hacks.disableVertexColors && chan.ambColorSource === GX.ColorSrc.VTX)
+    //    return `vec4(1.0, 1.0, 1.0, 1.0)`;
 
     switch (chan.ambColorSource) {
-        case GX.ColorSrc.VTX: return `a_Color${i}`;
-        case GX.ColorSrc.REG: return `u_ColorAmbReg[${i}]`;
+        case GX::ColorSrc::VTX: return QString("a_Color") + i;
+        case GX::ColorSrc::REG: return QString("u_ColorMatReg[") + i + "]";
     }
-}*/
 
-// TODO continue at https://github.com/magcius/noclip.website/blob/master/src/gx/gx_material.ts#L432
+    return "";
+}
+
+QString GXShaderLibrary::GX_Program::generateLightDiffFn(ColorChannelControl chan, QString& lightName)
+{
+    const QString NdotL = "dot(t_Normal, t_LightDeltaDir)";
+
+    switch (chan.diffuseFunction) {
+        case GX::DiffuseFunction::NONE: return "1.0";
+        case GX::DiffuseFunction::SIGN: return NdotL;
+        case GX::DiffuseFunction::CLAMP: return "max(" + NdotL + ", 0.0)";
+    }
+}
+
+QString GXShaderLibrary::GX_Program::generateLightAttnFn(ColorChannelControl chan, QString& lightName) {
+        if (chan.attenuationFunction == GX::AttenuationFunction::NONE) {
+            return R"(
+    t_Attenuation = 1.0;)";
+        } else if (chan.attenuationFunction == GX::AttenuationFunction::SPOT) {
+            const QString attn = "max(0.0, dot(t_LightDeltaDir, " + lightName + ".Direction.xyz))";
+            const QString cosAttn = "max(0.0, ApplyAttenuation(" + lightName + ".CosAtten.xyz, " + attn + "))";
+            const QString distAttn = "dot(" + lightName + ".DistAtten.xyz, vec3(1.0, t_LightDeltaDist, t_LightDeltaDist2))";
+            return R"(
+    t_Attenuation = ${cosAttn} / ${distAttn};)";
+        } else if (chan.attenuationFunction == GX::AttenuationFunction::SPEC) {
+            const QString attn = "(dot(t_Normal, t_LightDeltaDir) >= 0.0) ? max(0.0, dot(t_Normal, " + lightName + ".Direction.xyz)) : 0.0";
+            const QString cosAttn = "ApplyAttenuation(" + lightName + ".CosAtten.xyz, t_Attenuation)";
+            const QString distAttn = "ApplyAttenuation(" + lightName + ".DistAtten.xyz, t_Attenuation)";
+            return QString(R"(
+    t_Attenuation = )") + attn + R"(;
+    t_Attenuation = )" + cosAttn + " / " + distAttn + ";";
+        } else {
+            throw "whoops"; // lol nice
+        }
+    }
+
+// TODO continue at https://github.com/magcius/noclip.website/blob/master/src/gx/gx_material.ts#L474
