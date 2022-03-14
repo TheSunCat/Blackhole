@@ -1,21 +1,29 @@
 cmake_minimum_required(VERSION 3.22)
+
+#include(FetchContent)
+#FetchContent_Declare(
+  #vcpkg
+  #GIT_REPOSITORY "https://github.com/microsoft/vcpkg.git"
+  #GIT_TAG "5962cf5a3bfc2124e8de991a4e45a8edcb3b4c69" # 2022-03-08
+  #)
+
+#if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  #FetchContent_Populate(vcpkg)
+  #set(CMAKE_TOOLCHAIN_FILE "${vcpkg_SOURCE_DIR}/scripts/buildsystems/vcpkg.cmake")
+#endif()
+
 project(Blackhole)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-# Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
 # Instruct CMake to create code from Qt designer ui files
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 find_package(Qt5Widgets CONFIG REQUIRED)
-find_package(Qt5OpenGL)
-#find_package(Qt5 COMPONENTS OpenGL REQUIRED)
-#find_package(Qt5 COMPONENTS OpenGLWidgets REQUIRED)
-#find_package(Qt5 COMPONENTS Core5Compat REQUIRED)
 
 add_subdirectory(glm)
 

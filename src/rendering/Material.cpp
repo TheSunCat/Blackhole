@@ -118,4 +118,14 @@ QString GXShaderLibrary::GX_Program::generateMaterialSource(ColorChannelControl 
     return "";
 }
 
+/*QString generateAmbientSource(ColorChannelControl chan, uint32_t i) {
+    if (this.hacks !== null && this.hacks.disableVertexColors && chan.ambColorSource === GX.ColorSrc.VTX)
+        return `vec4(1.0, 1.0, 1.0, 1.0)`;
+
+    switch (chan.ambColorSource) {
+        case GX.ColorSrc.VTX: return `a_Color${i}`;
+        case GX.ColorSrc.REG: return `u_ColorAmbReg[${i}]`;
+    }
+}*/
+
 // TODO continue at https://github.com/magcius/noclip.website/blob/master/src/gx/gx_material.ts#L432

@@ -9,8 +9,6 @@
 
 class ObjectRenderer
 {
-    std::vector<std::future<void>> m_futures;
-
     BmdFile m_model;
     RarcFile m_rarc;
 

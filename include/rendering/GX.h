@@ -38,9 +38,14 @@ enum class WrapMode {
     MIRROR = 2,
 };
 
+// ugh Windows.h
+#ifdef NEAR
+#undef NEAR
+#endif
+
 enum class TexFilter {
-    kNEAR = 0,               // Point sampling, no mipmap
-    kLINEAR = 1,             // Bilinear filtering, no mipmap
+    NEAR = 0,               // Point sampling, no mipmap
+    LINEAR = 1,             // Bilinear filtering, no mipmap
     NEAR_MIP_NEAR = 2,      // Point sampling, discrete mipmap
     LIN_MIP_NEAR = 3,       // Bilinear filtering, discrete mipmap
     NEAR_MIP_LIN = 4,       // Point sampling, linear mipmap
