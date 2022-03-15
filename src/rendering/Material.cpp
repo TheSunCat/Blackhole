@@ -118,7 +118,7 @@ QString GXShaderLibrary::GX_Program::generateMaterialSource(ColorChannelControl 
     return "";
 }
 
-QString GXShaderLibrary::GX_Program::GX_ProgramgenerateAmbientSource(ColorChannelControl chan, uint32_t i) {
+QString GXShaderLibrary::GX_Program::generateAmbientSource(ColorChannelControl chan, uint32_t i) {
     //if (this.hacks !== null && this.hacks.disableVertexColors && chan.ambColorSource === GX.ColorSrc.VTX)
     //    return `vec4(1.0, 1.0, 1.0, 1.0)`;
 
@@ -130,9 +130,9 @@ QString GXShaderLibrary::GX_Program::GX_ProgramgenerateAmbientSource(ColorChanne
     return "";
 }
 
-QString GXShaderLibrary::GX_Program::generateLightDiffFn(ColorChannelControl chan, QString& lightName)
+QString GXShaderLibrary::GX_Program::generateLightDiffFn(ColorChannelControl chan, const QString& lightName)
 {
-    const QString NdotL = "dot(t_Normal, t_LightDeltaDir)";
+    QString NdotL = "dot(t_Normal, t_LightDeltaDir)";
 
     switch (chan.diffuseFunction) {
         case GX::DiffuseFunction::NONE: return "1.0";
@@ -141,26 +141,253 @@ QString GXShaderLibrary::GX_Program::generateLightDiffFn(ColorChannelControl cha
     }
 }
 
-QString GXShaderLibrary::GX_Program::generateLightAttnFn(ColorChannelControl chan, QString& lightName) {
-        if (chan.attenuationFunction == GX::AttenuationFunction::NONE) {
-            return R"(
+QString GXShaderLibrary::GX_Program::generateLightAttnFn(ColorChannelControl chan, const QString& lightName) {
+    if (chan.attenuationFunction == GX::AttenuationFunction::NONE) {
+        return R"(
     t_Attenuation = 1.0;)";
-        } else if (chan.attenuationFunction == GX::AttenuationFunction::SPOT) {
-            const QString attn = "max(0.0, dot(t_LightDeltaDir, " + lightName + ".Direction.xyz))";
-            const QString cosAttn = "max(0.0, ApplyAttenuation(" + lightName + ".CosAtten.xyz, " + attn + "))";
-            const QString distAttn = "dot(" + lightName + ".DistAtten.xyz, vec3(1.0, t_LightDeltaDist, t_LightDeltaDist2))";
-            return R"(
+    } else if (chan.attenuationFunction == GX::AttenuationFunction::SPOT) {
+        QString attn = "max(0.0, dot(t_LightDeltaDir, " + lightName + ".Direction.xyz))";
+        QString cosAttn = "max(0.0, ApplyAttenuation(" + lightName + ".CosAtten.xyz, " + attn + "))";
+        QString distAttn = "dot(" + lightName + ".DistAtten.xyz, vec3(1.0, t_LightDeltaDist, t_LightDeltaDist2))";
+        return R"(
     t_Attenuation = ${cosAttn} / ${distAttn};)";
-        } else if (chan.attenuationFunction == GX::AttenuationFunction::SPEC) {
-            const QString attn = "(dot(t_Normal, t_LightDeltaDir) >= 0.0) ? max(0.0, dot(t_Normal, " + lightName + ".Direction.xyz)) : 0.0";
-            const QString cosAttn = "ApplyAttenuation(" + lightName + ".CosAtten.xyz, t_Attenuation)";
-            const QString distAttn = "ApplyAttenuation(" + lightName + ".DistAtten.xyz, t_Attenuation)";
-            return QString(R"(
+    } else if (chan.attenuationFunction == GX::AttenuationFunction::SPEC) {
+        QString attn = "(dot(t_Normal, t_LightDeltaDir) >= 0.0) ? max(0.0, dot(t_Normal, " + lightName + ".Direction.xyz)) : 0.0";
+        QString cosAttn = "ApplyAttenuation(" + lightName + ".CosAtten.xyz, t_Attenuation)";
+        QString distAttn = "ApplyAttenuation(" + lightName + ".DistAtten.xyz, t_Attenuation)";
+        return QString(R"(
     t_Attenuation = )") + attn + R"(;
     t_Attenuation = )" + cosAttn + " / " + distAttn + ";";
-        } else {
-            throw "whoops"; // lol nice
+    } else {
+        throw "whoops"; // lol nice
+    }
+}
+
+QString GXShaderLibrary::GX_Program::generateColorChannel(ColorChannelControl chan, const QString& outputName, uint32_t i) {
+        QString matSource = generateMaterialSource(chan, i);
+        QString ambSource = generateAmbientSource(chan, i);
+
+        bool lightingEnabled = chan.lightingEnabled;
+        if (hacks.disableLighting)
+            lightingEnabled = false;
+
+        QString generateLightAccum = "";
+        if (lightingEnabled) {
+            generateLightAccum = R"(
+    t_LightAccum = ${ambSource};)";
+
+        if (chan.litMask != 0)
+            assert(material.hasLightsBlock);
+
+        for (uint8_t j = 0; j < 8; j++) {
+            if (!(chan.litMask & (1 << j)))
+                continue;
+
+            QString lightName = QString("u_LightParams[") + j + "]";
+            generateLightAccum += R"(
+    t_LightDelta = )" + lightName + R"(.Position.xyz - v_Position.xyz;
+    t_LightDeltaDist2 = dot(t_LightDelta, t_LightDelta);
+    t_LightDeltaDist = sqrt(t_LightDeltaDist2);
+    t_LightDeltaDir = t_LightDelta / t_LightDeltaDist;
+)" + generateLightAttnFn(chan, lightName) + R"(
+    t_LightAccum += )" + generateLightDiffFn(chan, lightName) + " * t_Attenuation * " + lightName + ".Color;\n";
         }
+    } else {
+        // Without lighting, everything is full-bright.
+        generateLightAccum += "\n\tt_LightAccum = vec4(1.0);";
     }
 
-// TODO continue at https://github.com/magcius/noclip.website/blob/master/src/gx/gx_material.ts#L474
+    return generateLightAccum + "\n\t" + outputName + " = " + matSource + " * clamp(t_LightAccum, 0.0, 1.0);";
+}
+
+QString GXShaderLibrary::GX_Program::generateLightChannel(LightChannelControl lightChannel, const QString& outputName, uint32_t i) {
+    if (colorChannelsEqual(lightChannel.colorChannel, lightChannel.alphaChannel)) {
+        return "\n\t"
+        + generateColorChannel(lightChannel.colorChannel, outputName, i);
+    } else {
+        return "\n\t" +
+        generateColorChannel(lightChannel.colorChannel, "t_ColorChanTemp", i) + "\n\t" +
+        outputName + ".rgb = t_ColorChanTemp.rgb;\n\t" +
+        generateColorChannel(lightChannel.alphaChannel, "t_ColorChanTemp", i) + "\n\t" +
+        outputName + ".a = t_ColorChanTemp.a;";
+    }
+}
+
+QString GXShaderLibrary::GX_Program::generateLightChannels()
+{
+    QString ret = "";
+    for(uint32_t i = 0; i < material.lightChannels.size(); i++)
+        ret += generateLightChannel(material.lightChannels[i], QString("v_Color") + i, i) + "\n";
+
+    return ret;
+}
+
+// Output is a vec3, src is a vec4.
+QString GXShaderLibrary::GX_Program::generateMulPntMatrixStatic(TexGenMatrix pnt, const QString& src, const QString& funcName) {
+    if (pnt == GX::TexGenMatrix::IDENTITY) {
+        return src + ".xyz";
+    } else if (pnt >= GX::TexGenMatrix::TEXMTX0) {
+        QString texMtxIdx = QString::number((uint32_t(pnt) - uint32_t(GX::TexGenMatrix::TEXMTX0)) / 3);
+        return funcName + "(u_TexMtx[" + texMtxIdx + "], " + src + ")";
+    } else if (pnt >= GX::TexGenMatrix::PNMTX0) {
+        QString pnMtxIdx = QString::number((uint32_t(pnt) - uint32_t(GX::TexGenMatrix::PNMTX0)) / 3);
+        return funcName + "(u_PosMtx[" + pnMtxIdx + "], " + src + ")";
+    } else {
+        throw "whoops";
+    }
+}
+
+// Output is a vec3, src is a vec4.
+QString GXShaderLibrary::GX_Program::generateMulPntMatrixDynamic(const QString& attrStr, const QString& src, const QString& funcName) {
+    return funcName + "(GetPosTexMatrix(" + attrStr + "), " + src + ")";
+}
+
+QString GXShaderLibrary::GX_Program::generateTexMtxIdxAttr(TexCoordID index) {
+    if (index == TexCoordID::TEXCOORD0) return "(a_TexMtx0123Idx.x * 256.0)";
+    if (index == TexCoordID::TEXCOORD1) return "(a_TexMtx0123Idx.y * 256.0)";
+    if (index == TexCoordID::TEXCOORD2) return "(a_TexMtx0123Idx.z * 256.0)";
+    if (index == TexCoordID::TEXCOORD3) return "(a_TexMtx0123Idx.w * 256.0)";
+    if (index == TexCoordID::TEXCOORD4) return "(a_TexMtx4567Idx.x * 256.0)";
+    if (index == TexCoordID::TEXCOORD5) return "(a_TexMtx4567Idx.y * 256.0)";
+    if (index == TexCoordID::TEXCOORD6) return "(a_TexMtx4567Idx.z * 256.0)";
+    if (index == TexCoordID::TEXCOORD7) return "(a_TexMtx4567Idx.w * 256.0)";
+    throw "whoops";
+}
+
+// TexGen
+QString GXShaderLibrary::GX_Program::generateTexGenSource(GX::TexGenSrc src)
+{
+    switch (src) {
+        case TexGenSrc::POS:       return "vec4(a_Position.xyz, 1.0)";
+        case TexGenSrc::NRM:       return "vec4(a_Normal.xyz, 1.0)";
+        case TexGenSrc::BINRM:     return "vec4(a_Binormal.xyz, 1.0)";
+        case TexGenSrc::TANGENT:   return "vec4(a_Tangent.xyz, 1.0)";
+        case TexGenSrc::COLOR0:    return "v_Color0";
+        case TexGenSrc::COLOR1:    return "v_Color1";
+        case TexGenSrc::TEX0:      return "vec4(a_Tex01.xy, 1.0, 1.0)";
+        case TexGenSrc::TEX1:      return "vec4(a_Tex01.zw, 1.0, 1.0)";
+        case TexGenSrc::TEX2:      return "vec4(a_Tex23.xy, 1.0, 1.0)";
+        case TexGenSrc::TEX3:      return "vec4(a_Tex23.zw, 1.0, 1.0)";
+        case TexGenSrc::TEX4:      return "vec4(a_Tex45.xy, 1.0, 1.0)";
+        case TexGenSrc::TEX5:      return "vec4(a_Tex45.zw, 1.0, 1.0)";
+        case TexGenSrc::TEX6:      return "vec4(a_Tex67.xy, 1.0, 1.0)";
+        case TexGenSrc::TEX7:      return "vec4(a_Tex67.zw, 1.0, 1.0)";
+        // Use a previously generated texcoordgen.
+        case TexGenSrc::TEXCOORD0: return "vec4(v_TexCoord0, 1.0)";
+        case TexGenSrc::TEXCOORD1: return "vec4(v_TexCoord1, 1.0)";
+        case TexGenSrc::TEXCOORD2: return "vec4(v_TexCoord2, 1.0)";
+        case TexGenSrc::TEXCOORD3: return "vec4(v_TexCoord3, 1.0)";
+        case TexGenSrc::TEXCOORD4: return "vec4(v_TexCoord4, 1.0)";
+        case TexGenSrc::TEXCOORD5: return "vec4(v_TexCoord5, 1.0)";
+        case TexGenSrc::TEXCOORD6: return "vec4(v_TexCoord6, 1.0)";
+        default:
+            throw "whoops";
+    }
+}
+
+QString GXShaderLibrary::GX_Program::generatePostTexGenMatrixMult(GX::TexGen texCoordGen, const QString& src)
+{
+    if (texCoordGen.postMatrix == PostTexGenMatrix::PTIDENTITY) {
+        return src + ".xyz";
+    } else if (texCoordGen.postMatrix >= PostTexGenMatrix::PTTEXMTX0) {
+        QString texMtxIdx = QString::number((uint32_t(texCoordGen.postMatrix) - uint32_t(PostTexGenMatrix::PTTEXMTX0)) / 3);
+        return "Mul(u_PostTexMtx[" + texMtxIdx + "], " + src + ")";
+    } else {
+        throw "whoops";
+    }
+}
+
+QString GXShaderLibrary::GX_Program::generateTexGenMatrixMult(uint32_t texCoordGenIndex, const QString& src)
+{
+    if (material.useTexMtxIdx[texCoordGenIndex]) {
+        QString attrStr = generateTexMtxIdxAttr(TexCoordID(texCoordGenIndex));
+        return generateMulPntMatrixDynamic(attrStr, src);
+    } else {
+        return generateMulPntMatrixStatic(material.texGens[texCoordGenIndex].matrix, src);
+    }
+}
+
+QString GXShaderLibrary::GX_Program::generateTexGenType(uint32_t texCoordGenIndex)
+{
+    TexGen texCoordGen = material.texGens[texCoordGenIndex];
+    QString src = generateTexGenSource(texCoordGen.source);
+
+    if (texCoordGen.type == TexGenType::SRTG)
+        return "vec3(" + src + ".xy, 1.0)";
+    else if (texCoordGen.type == TexGenType::MTX2x4)
+        return "vec3(" + generateTexGenMatrixMult(texCoordGenIndex, src) + ".xy, 1.0)";
+    else if (texCoordGen.type == TexGenType::MTX3x4)
+        return generateTexGenMatrixMult(texCoordGenIndex, src);
+    else
+        throw "whoops";
+}
+
+QString GXShaderLibrary::GX_Program::generateTexGenNrm(uint32_t texCoordGenIndex)
+{
+    TexGen texCoordGen = material.texGens[texCoordGenIndex];
+    QString src = generateTexGenType(texCoordGenIndex);
+
+    if (texCoordGen.normalize)
+        return "normalize(" + src + ")";
+    else
+        return src;
+}
+
+QString GXShaderLibrary::GX_Program::generateTexGenPost(uint32_t texCoordGenIndex)
+{
+    TexGen texCoordGen = material.texGens[texCoordGenIndex];
+    QString src = generateTexGenNrm(texCoordGenIndex);
+
+    if (texCoordGen.postMatrix == PostTexGenMatrix::PTIDENTITY) {
+        return src;
+    } else {
+        return generatePostTexGenMatrixMult(texCoordGen, "vec4(" + src + ", 1.0)");
+    }
+}
+
+QString GXShaderLibrary::GX_Program::generateTexGen(uint32_t i)
+{
+    TexGen tg = material.texGens[i];
+
+    QString suffix;
+    if (tg.type == TexGenType::MTX2x4 || tg.type == TexGenType::SRTG)
+        suffix = ".xy";
+    else if (tg.type == TexGenType::MTX3x4)
+        suffix = ".xyz";
+    else
+        throw "whoops";
+
+    return QString("\n\
+// TexGen ") + i + " Type: " + uint32_t(tg.type) + " Source: " + uint32_t(tg.source) + " Matrix: " + uint32_t(tg.matrix) + "\n\
+v_TexCoord" + i + " = " + generateTexGenPost(i) + suffix + ";)";
+}
+
+QString GXShaderLibrary::GX_Program::generateTexGens()
+{
+    QString ret = "";
+    for(uint32_t i = 0; i < material.texGens.size(); i++)
+        ret += generateTexGen(i);
+
+    return ret;
+}
+
+QString GXShaderLibrary::GX_Program::generateTexCoordVaryings()
+{
+    QString ret = "";
+    for(uint32_t i = 0; i < material.texGens.size(); i++)
+    {
+        TexGen tg = material.texGens[i];
+
+        if (tg.type == TexGenType::MTX2x4 || tg.type == TexGenType::SRTG)
+            ret += QString("varying vec2 v_TexCoord") + i + ";\n";
+        else if (tg.type == TexGenType::MTX3x4)
+            ret += QString("varying highp vec3 v_TexCoord") + i + ";\n";
+        else
+            throw "whoops";
+    }
+
+    return ret;
+}
+
+
+// TODO continue at https://github.com/magcius/noclip.website/blob/master/src/gx/gx_material.ts#L700

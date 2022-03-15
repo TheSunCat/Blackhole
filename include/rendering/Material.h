@@ -215,8 +215,33 @@ vec4 TevOverflow(vec4 a) { return vec4(TevOverflow(a.r), TevOverflow(a.g), TevOv
         QString generateFloat(float f);
         QString generateMaterialSource(ColorChannelControl chan, uint32_t i);
         QString generateAmbientSource(ColorChannelControl chan, uint32_t i);
-        QString generateLightDiffFn(ColorChannelControl chan, QString& lightName);
-        QString generateLightAttnFn(ColorChannelControl chan, QString& lightName);
+        QString generateLightDiffFn(ColorChannelControl chan, const QString& lightName);
+        QString generateLightAttnFn(ColorChannelControl chan, const QString& lightName);
+        QString generateColorChannel(ColorChannelControl chan, const QString& outputName, uint32_t i);
+        QString generateLightChannel(LightChannelControl lightChannel, const QString& outputName, uint32_t i);
+
+        QString generateLightChannels();
+
+        QString generateMulPntMatrixStatic(TexGenMatrix pnt, const QString& src, const QString& funcName = "Mul"); // Output is a vec3, src is a vec4.
+        QString generateMulPntMatrixDynamic(const QString& attrStr, const QString& src, const QString& funcName = "Mul"); // Output is a vec3, src is a vec4.
+        QString generateTexMtxIdxAttr(TexCoordID index);
+
+        // TexGen
+        QString generateTexGenSource(TexGenSrc src);
+        QString generatePostTexGenMatrixMult(TexGen texCoordGen, const QString& src);
+        QString generateTexGenMatrixMult(uint32_t texCoordGenIndex, const QString& src);
+        QString generateTexGenType(uint32_t texCoordGenIndex);
+        QString generateTexGenNrm(uint32_t texCoordGenIndex);
+        QString generateTexGenPost(uint32_t texCoordGenIndex);
+        QString generateTexGen(uint32_t i);
+
+        QString generateTexGens();
+        QString generateTexCoordVaryings();
+
+
+        GXMaterialHacks hacks;
+
+        Material material;
     };
 
 }; // namespace GXShaderLibrary
