@@ -16,7 +16,7 @@ You will also need CMake installed.
 
 On Arch Linux, the packages can be installed via the following command:
 ```console
-sudo pacman -S qt6 qt6-5compat cmake
+sudo pacman -S qt5 cmake
 ```
 
 Finally, you can run CMake to create project files. Here is an example of an out-of-tree build using GNU Makefiles:
