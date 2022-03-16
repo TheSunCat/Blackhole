@@ -242,6 +242,41 @@ vec4 TevOverflow(vec4 a) { return vec4(TevOverflow(a.r), TevOverflow(a.g), TevOv
         // IndTex
         QString generateIndTexStageScaleN(IndTexScale_t scale);
         QString generateIndTexStageScale(IndTexStage stage);
+        QString generateTextureSample(uint32_t index, const QString& coord);
+        QString generateIndTexStage(uint32_t indTexStageIndex);
+        QString generateIndTexStages();
+
+        // TEV
+        QString generateKonstColorSel(KonstColorSel_t konstColor);
+        QString generateKonstAlphaSel(KonstAlphaSel_t konstAlpha);
+        QString generateIndTexCoordBase(TevStage& stage);
+        QString generateAlphaBumpSelChannel(TevStage& stage);
+        QString generateAlphaBumpSel(TevStage& stage);
+        QString generateRas(TevStage& stage);
+        bool stageUsesSimpleCoords(TevStage& stage);
+        QString generateTexAccess(TevStage& stage);
+        char generateComponentSwizzle(SwapTable* swapTable, TevColorChan_t colorIn);
+        QString generateColorSwizzle(SwapTable* swapTable, CC_t colorIn);
+        QString generateColorIn(TevStage& stage, CC_t colorIn);
+        QString generateAlphaIn(TevStage& stage, CA_t alphaIn);
+        QString generateTevInputs(TevStage& stage);
+        QString generateTevRegister(Register_t regID);
+        QString generateTevOpBiasScaleClamp(const QString& value, TevBias_t bias, TevScale_t scale);
+        QString generateTevOp(TevOp_t op, TevBias_t bias, TevScale_t scale, const QString& a, const QString& b, const QString& c, const QString& d, const QString& zero);
+        QString generateTevOpValue(TevOp_t op, TevBias_t bias, TevScale_t scale, bool clamp, const QString& a, const QString& b, const QString& c, const QString& d, const QString& zero);
+        QString generateColorOp(TevStage& stage);
+        QString generateAlphaOp(TevStage& stage);
+        QString generateTevTexCoordWrapN(const QString& texCoord, IndTexWrap_t wrap);
+        QString generateTevTexCoordWrap(TevStage& stage);
+        QString generateTevTexCoordIndTexCoordBias(TevStage& stage);
+        QString generateTevTexCoordIndTexCoord(TevStage& stage);
+        QString generateTevTexCoordIndirectMtx(TevStage& stage);
+        QString generateTevTexCoordIndirectTranslation(TevStage& stage);
+        QString generateTevTexCoordIndirect(TevStage& stage);
+        QString generateTevTexCoord(TevStage& stage);
+        QString generateTevStage(uint32_t tevStageIndex);
+        QString generateTevStages();
+        QString generateTevStagesLastMinuteFixup();
 
 
         GXMaterialHacks hacks;
