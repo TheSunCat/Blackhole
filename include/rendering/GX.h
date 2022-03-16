@@ -295,7 +295,7 @@ enum class Register {
     REG2 = 3,
 };
 
-enum class TexCoordID {
+enum class TexCoordID : uint32_t {
     TEXCOORD0 = 0,
     TEXCOORD1 = 1,
     TEXCOORD2 = 2,

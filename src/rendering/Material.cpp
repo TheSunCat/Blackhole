@@ -389,5 +389,49 @@ QString GXShaderLibrary::GX_Program::generateTexCoordVaryings()
     return ret;
 }
 
+QString GXShaderLibrary::GX_Program::generateTexCoordGetters()
+{
+    QString ret = "";
+    for(uint32_t i = 0; i < material.texGens.size(); i++)
+    {
+        TexGen tg = material.texGens[i];
+
+        if (tg.type == TexGenType::MTX2x4 || tg.type == TexGenType::SRTG)
+            ret += QString("vec2 ReadTexCoord") + i + "() { return v_TexCoord" + i + ".xy; }\n";
+        else if (tg.type == TexGenType::MTX3x4)
+            ret += QString("vec2 ReadTexCoord") + i + "() { return v_TexCoord" + i + ".xy / v_TexCoord" + i + ".z; }\n";
+        else
+            throw "whoops";
+    }
+
+    return ret;
+}
+
+QString GXShaderLibrary::GX_Program::generateIndTexStageScaleN(GX::IndTexScale scale)
+{
+    switch (scale) {
+        case IndTexScale::_1:   return "1.0";
+        case IndTexScale::_2:   return "1.0/2.0";
+        case IndTexScale::_4:   return "1.0/4.0";
+        case IndTexScale::_8:   return "1.0/8.0";
+        case IndTexScale::_16:  return "1.0/16.0";
+        case IndTexScale::_32:  return "1.0/32.0";
+        case IndTexScale::_64:  return "1.0/64.0";
+        case IndTexScale::_128: return "1.0/128.0";
+        case IndTexScale::_256: return "1.0/256.0";
+        default: throw "whoops";
+    }
+}
+
+QString GXShaderLibrary::GX_Program::generateIndTexStageScale(GX::IndTexStage stage)
+{
+    QString baseCoord = "ReadTexCoord" + QString::number(uint32_t(stage.texCoordId)) + "()";
+    if (stage.scaleS == IndTexScale::_1 && stage.scaleT == IndTexScale::_1)
+        return baseCoord;
+    else
+        return baseCoord + " * vec2(" + generateIndTexStageScaleN(stage.scaleS) + ", " + generateIndTexStageScaleN(stage.scaleT) + ")";
+}
+
+
 
 // TODO continue at https://github.com/magcius/noclip.website/blob/master/src/gx/gx_material.ts#L700

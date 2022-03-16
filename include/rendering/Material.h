@@ -237,6 +237,11 @@ vec4 TevOverflow(vec4 a) { return vec4(TevOverflow(a.r), TevOverflow(a.g), TevOv
 
         QString generateTexGens();
         QString generateTexCoordVaryings();
+        QString generateTexCoordGetters();
+
+        // IndTex
+        QString generateIndTexStageScaleN(IndTexScale scale);
+        QString generateIndTexStageScale(IndTexStage stage);
 
 
         GXMaterialHacks hacks;
