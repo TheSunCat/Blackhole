@@ -118,11 +118,11 @@ class BmdFile
 
         QString name;
 
-        GX::WrapMode wrapS;
-        GX::WrapMode wrapT;
+        GX::WrapMode_t wrapS;
+        GX::WrapMode_t wrapT;
 
-        GX::TexFilter minFilter;
-        GX::TexFilter magFilter;
+        GX::TexFilter_t minFilter;
+        GX::TexFilter_t magFilter;
 
         float minLOD;
         float maxLOD;

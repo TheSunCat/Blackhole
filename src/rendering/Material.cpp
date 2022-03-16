@@ -1,5 +1,7 @@
 #include "rendering/Material.h"
 
+using namespace GX;
+
 QString GXShaderLibrary::generateBindingsDefinition(Material& material)
 {
     return QString(R"(
@@ -223,14 +225,14 @@ QString GXShaderLibrary::GX_Program::generateLightChannels()
 }
 
 // Output is a vec3, src is a vec4.
-QString GXShaderLibrary::GX_Program::generateMulPntMatrixStatic(TexGenMatrix pnt, const QString& src, const QString& funcName) {
+QString GXShaderLibrary::GX_Program::generateMulPntMatrixStatic(TexGenMatrix_t pnt, const QString& src, const QString& funcName) {
     if (pnt == GX::TexGenMatrix::IDENTITY) {
         return src + ".xyz";
     } else if (pnt >= GX::TexGenMatrix::TEXMTX0) {
-        QString texMtxIdx = QString::number((uint32_t(pnt) - uint32_t(GX::TexGenMatrix::TEXMTX0)) / 3);
+        QString texMtxIdx = QString::number((pnt - GX::TexGenMatrix::TEXMTX0) / 3);
         return funcName + "(u_TexMtx[" + texMtxIdx + "], " + src + ")";
     } else if (pnt >= GX::TexGenMatrix::PNMTX0) {
-        QString pnMtxIdx = QString::number((uint32_t(pnt) - uint32_t(GX::TexGenMatrix::PNMTX0)) / 3);
+        QString pnMtxIdx = QString::number((pnt - GX::TexGenMatrix::PNMTX0) / 3);
         return funcName + "(u_PosMtx[" + pnMtxIdx + "], " + src + ")";
     } else {
         throw "whoops";
@@ -242,7 +244,7 @@ QString GXShaderLibrary::GX_Program::generateMulPntMatrixDynamic(const QString& 
     return funcName + "(GetPosTexMatrix(" + attrStr + "), " + src + ")";
 }
 
-QString GXShaderLibrary::GX_Program::generateTexMtxIdxAttr(TexCoordID index) {
+QString GXShaderLibrary::GX_Program::generateTexMtxIdxAttr(TexCoordID_t index) {
     if (index == TexCoordID::TEXCOORD0) return "(a_TexMtx0123Idx.x * 256.0)";
     if (index == TexCoordID::TEXCOORD1) return "(a_TexMtx0123Idx.y * 256.0)";
     if (index == TexCoordID::TEXCOORD2) return "(a_TexMtx0123Idx.z * 256.0)";
@@ -255,7 +257,7 @@ QString GXShaderLibrary::GX_Program::generateTexMtxIdxAttr(TexCoordID index) {
 }
 
 // TexGen
-QString GXShaderLibrary::GX_Program::generateTexGenSource(GX::TexGenSrc src)
+QString GXShaderLibrary::GX_Program::generateTexGenSource(TexGenSrc_t src)
 {
     switch (src) {
         case TexGenSrc::POS:       return "vec4(a_Position.xyz, 1.0)";
@@ -285,12 +287,12 @@ QString GXShaderLibrary::GX_Program::generateTexGenSource(GX::TexGenSrc src)
     }
 }
 
-QString GXShaderLibrary::GX_Program::generatePostTexGenMatrixMult(GX::TexGen texCoordGen, const QString& src)
+QString GXShaderLibrary::GX_Program::generatePostTexGenMatrixMult(TexGen texCoordGen, const QString& src)
 {
     if (texCoordGen.postMatrix == PostTexGenMatrix::PTIDENTITY) {
         return src + ".xyz";
     } else if (texCoordGen.postMatrix >= PostTexGenMatrix::PTTEXMTX0) {
-        QString texMtxIdx = QString::number((uint32_t(texCoordGen.postMatrix) - uint32_t(PostTexGenMatrix::PTTEXMTX0)) / 3);
+        QString texMtxIdx = QString::number((texCoordGen.postMatrix - PostTexGenMatrix::PTTEXMTX0) / 3);
         return "Mul(u_PostTexMtx[" + texMtxIdx + "], " + src + ")";
     } else {
         throw "whoops";
@@ -300,7 +302,7 @@ QString GXShaderLibrary::GX_Program::generatePostTexGenMatrixMult(GX::TexGen tex
 QString GXShaderLibrary::GX_Program::generateTexGenMatrixMult(uint32_t texCoordGenIndex, const QString& src)
 {
     if (material.useTexMtxIdx[texCoordGenIndex]) {
-        QString attrStr = generateTexMtxIdxAttr(TexCoordID(texCoordGenIndex));
+        QString attrStr = generateTexMtxIdxAttr(TexCoordID_t(texCoordGenIndex));
         return generateMulPntMatrixDynamic(attrStr, src);
     } else {
         return generateMulPntMatrixStatic(material.texGens[texCoordGenIndex].matrix, src);
@@ -358,7 +360,7 @@ QString GXShaderLibrary::GX_Program::generateTexGen(uint32_t i)
         throw "whoops";
 
     return QString("\n\
-// TexGen ") + i + " Type: " + uint32_t(tg.type) + " Source: " + uint32_t(tg.source) + " Matrix: " + uint32_t(tg.matrix) + "\n\
+// TexGen ") + i + " Type: " + tg.type + " Source: " + tg.source + " Matrix: " + tg.matrix + "\n\
 v_TexCoord" + i + " = " + generateTexGenPost(i) + suffix + ";)";
 }
 
@@ -407,7 +409,7 @@ QString GXShaderLibrary::GX_Program::generateTexCoordGetters()
     return ret;
 }
 
-QString GXShaderLibrary::GX_Program::generateIndTexStageScaleN(GX::IndTexScale scale)
+QString GXShaderLibrary::GX_Program::generateIndTexStageScaleN(IndTexScale_t scale)
 {
     switch (scale) {
         case IndTexScale::_1:   return "1.0";
@@ -423,9 +425,9 @@ QString GXShaderLibrary::GX_Program::generateIndTexStageScaleN(GX::IndTexScale s
     }
 }
 
-QString GXShaderLibrary::GX_Program::generateIndTexStageScale(GX::IndTexStage stage)
+QString GXShaderLibrary::GX_Program::generateIndTexStageScale(IndTexStage stage)
 {
-    QString baseCoord = "ReadTexCoord" + QString::number(uint32_t(stage.texCoordId)) + "()";
+    QString baseCoord = "ReadTexCoord" + QString::number(stage.texCoordId) + "()";
     if (stage.scaleS == IndTexScale::_1 && stage.scaleT == IndTexScale::_1)
         return baseCoord;
     else

@@ -770,26 +770,26 @@ void BmdFile::readMAT3()
                 continue; // negative index means skip
 
             file->position(sectionStart + texGenTableOffset + texGenIndex * 0x04);
-            GX::TexGenType type = GX::TexGenType(file->readByte());
-            GX::TexGenSrc source = GX::TexGenSrc(file->readByte());
-            GX::TexGenMatrix matrixCheck = GX::TexGenMatrix(file->readByte());
+            GX::TexGenType_t type = GX::TexGenType_t(file->readByte());
+            GX::TexGenSrc_t source = GX::TexGenSrc_t(file->readByte());
+            GX::TexGenMatrix_t matrixCheck = GX::TexGenMatrix_t(file->readByte());
             assert(file->readByte() == 0xFF);
 
-            GX::PostTexGenMatrix postMatrix = GX::PostTexGenMatrix::PTIDENTITY;
+            GX::PostTexGenMatrix_t postMatrix = GX::PostTexGenMatrix::PTIDENTITY;
 
             file->position(sectionStart + materialEntryIndex + 0x38 + j * 0x02);
             int16_t postTexGenIndex = file->readShortS(); // type punning. bad?
             if(postTexGenTableOffset > 0 && postTexGenIndex >= 0)
             {
                 file->position(sectionStart + postTexGenTableOffset + texGenIndex * 0x04 + 0x02);
-                postMatrix = GX::PostTexGenMatrix(file->readByte());
+                postMatrix = GX::PostTexGenMatrix_t(file->readByte());
                 assert(file->readByte() == 0xFF);
             }
 
             // BTK can apply texture animations to materials that have the matrix set to IDENTITY.
             // For this reason, we always assign a texture matrix. In theory, the file should
             // have an identity texture matrix in the texMatrices section, so it should render correctly
-            GX::TexGenMatrix matrix = GX::TexGenMatrix(int(GX::TexGenMatrix::TEXMTX0) + j * 3);
+            GX::TexGenMatrix_t matrix = GX::TexGenMatrix_t(GX::TexGenMatrix::TEXMTX0 + (j * 3));
 
             // If we ever find a counter-example for this, I'll have to rethink the scheme, but I
             // *believe* that texture matrices should always be paired with TexGens in order.
@@ -813,7 +813,7 @@ void BmdFile::readMAT3()
                 TexMatrixProjection projection = TexMatrixProjection(file->readByte());
                 uint8_t info = file->readByte();
 
-                GX::TexMtxMapMode matrixMode = GX::TexMtxMapMode(info & 0x3F);
+                GX::TexMtxMapMode_t matrixMode = GX::TexMtxMapMode_t(info & 0x3F);
 
                 // Detect uses of unlikely map modes.
                 assert(matrixMode != GX::TexMtxMapMode::ProjmapBasic && matrixMode != GX::TexMtxMapMode::ViewProjmapBasic &&
@@ -968,15 +968,15 @@ void BmdFile::readMAT3()
                 uint32_t indTexOrderOffset = indirectEntryOffset + 0x04 + j * 0x04;
                 file->position(sectionStart + indTexOrderOffset);
 
-                GX::TexCoordID texCoordId = GX::TexCoordID(file->readByte());
-                GX::TexMapID texture = GX::TexMapID(file->readByte());
+                GX::TexCoordID_t texCoordId = GX::TexCoordID_t(file->readByte());
+                GX::TexMapID_t texture = GX::TexMapID_t(file->readByte());
 
                 // SetIndTexCoordScale
                 uint32_t indTexScaleOffset = indirectEntryOffset + 0x04 + (0x04 * 4) + (0x1C * 3) + j * 0x04;
                 file->position(sectionStart + indTexScaleOffset);
 
-                GX::IndTexScale scaleS = GX::IndTexScale(file->readByte());
-                GX::IndTexScale scaleT = GX::IndTexScale(file->readByte());
+                GX::IndTexScale_t scaleS = GX::IndTexScale_t(file->readByte());
+                GX::IndTexScale_t scaleT = GX::IndTexScale_t(file->readByte());
                 indTexStages.push_back({ texCoordId, texture, scaleS, scaleT });
 
                 // SetIndTexMatrix
@@ -1017,25 +1017,25 @@ void BmdFile::readMAT3()
             uint32_t tevStageOffset = tevStageTableOffset + tevStageIndex * 0x14;
             file->position(sectionStart + tevStageOffset + 1); // skip unk byte
 
-            GX::CC colorInA = GX::CC(file->readByte());
-            GX::CC colorInB = GX::CC(file->readByte());
-            GX::CC colorInC = GX::CC(file->readByte());
-            GX::CC colorInD = GX::CC(file->readByte());
-            GX::TevOp colorOp = GX::TevOp(file->readByte());
-            GX::TevBias colorBias = GX::TevBias(file->readByte());
-            GX::TevScale colorScale = GX::TevScale(file->readByte());
+            GX::CC_t colorInA = GX::CC_t(file->readByte());
+            GX::CC_t colorInB = GX::CC_t(file->readByte());
+            GX::CC_t colorInC = GX::CC_t(file->readByte());
+            GX::CC_t colorInD = GX::CC_t(file->readByte());
+            GX::TevOp_t colorOp = GX::TevOp_t(file->readByte());
+            GX::TevBias_t colorBias = GX::TevBias_t(file->readByte());
+            GX::TevScale_t colorScale = GX::TevScale_t(file->readByte());
             bool colorClamp = file->readByte();
-            GX::Register colorRegID = GX::Register(file->readByte());
+            GX::Register_t colorRegID = GX::Register_t(file->readByte());
 
-            GX::CA alphaInA = GX::CA(file->readByte());
-            GX::CA alphaInB = GX::CA(file->readByte());
-            GX::CA alphaInC = GX::CA(file->readByte());
-            GX::CA alphaInD = GX::CA(file->readByte());
-            GX::TevOp alphaOp = GX::TevOp(file->readByte());
-            GX::TevBias alphaBias = GX::TevBias(file->readByte());
-            GX::TevScale alphaScale = GX::TevScale(file->readByte());
+            GX::CA_t alphaInA = GX::CA_t(file->readByte());
+            GX::CA_t alphaInB = GX::CA_t(file->readByte());
+            GX::CA_t alphaInC = GX::CA_t(file->readByte());
+            GX::CA_t alphaInD = GX::CA_t(file->readByte());
+            GX::TevOp_t alphaOp = GX::TevOp_t(file->readByte());
+            GX::TevBias_t alphaBias = GX::TevBias_t(file->readByte());
+            GX::TevScale_t alphaScale = GX::TevScale_t(file->readByte());
             bool alphaClamp = file->readByte();
-            GX::Register alphaRegID = GX::Register(file->readByte());
+            GX::Register_t alphaRegID = GX::Register_t(file->readByte());
 
             // TevOrder
             file->position(sectionStart + materialEntryIndex + 0xBC + j * 0x02);
@@ -1045,11 +1045,11 @@ void BmdFile::readMAT3()
             uint32_t tevOrderOffset = tevOrderTableOffset + tevOrderIndex * 0x04;
             file->position(sectionStart + tevOrderOffset);
 
-            GX::TexCoordID texCoordID = GX::TexCoordID(file->readByte());
-            GX::TexMapID texMap = GX::TexMapID(file->readByte());
+            GX::TexCoordID_t texCoordID = GX::TexCoordID_t(file->readByte());
+            GX::TexMapID_t texMap = GX::TexMapID_t(file->readByte());
 
-            GX::RasColorChannelID channelID;
-            switch (GX::ColorChannelID(file->readByte())) {
+            GX::RasColorChannelID_t channelID;
+            switch (GX::ColorChannelID_t(file->readByte())) {
                 case GX::ColorChannelID::COLOR0:
                 case GX::ColorChannelID::ALPHA0:
                 case GX::ColorChannelID::COLOR0A0:
@@ -1077,9 +1077,9 @@ void BmdFile::readMAT3()
 
             // KonstSel
             file->position(sectionStart + materialEntryIndex + 0x9C + j);
-            GX::KonstColorSel konstColorSel = GX::KonstColorSel(file->readByte());
+            GX::KonstColorSel_t konstColorSel = GX::KonstColorSel_t(file->readByte());
             file->skip(0x10);
-            GX::KonstAlphaSel konstAlphaSel = GX::KonstAlphaSel(file->readByte());
+            GX::KonstAlphaSel_t konstAlphaSel = GX::KonstAlphaSel_t(file->readByte());
 
             // SetTevSwapMode
             file->position(sectionStart + materialEntryIndex + 0x104 + j * 0x02);
@@ -1108,28 +1108,28 @@ void BmdFile::readMAT3()
             uint8_t texSwapD = file->readByte();
 
             GX::SwapTable rasSwapTable = {
-                GX::TevColorChan(rasSwapA),
-                GX::TevColorChan(rasSwapB),
-                GX::TevColorChan(rasSwapC),
-                GX::TevColorChan(rasSwapD)
+                GX::TevColorChan_t(rasSwapA),
+                GX::TevColorChan_t(rasSwapB),
+                GX::TevColorChan_t(rasSwapC),
+                GX::TevColorChan_t(rasSwapD)
             };
 
             GX::SwapTable texSwapTable = {
-                GX::TevColorChan(texSwapA),
-                GX::TevColorChan(texSwapB),
-                GX::TevColorChan(texSwapC),
-                GX::TevColorChan(texSwapD)
+                GX::TevColorChan_t(texSwapA),
+                GX::TevColorChan_t(texSwapB),
+                GX::TevColorChan_t(texSwapC),
+                GX::TevColorChan_t(texSwapD)
             };
 
             // SetTevIndirect
             uint32_t indTexStageOffset = indirectEntryOffset + 0x04 + (0x04 * 4) + (0x1C * 3) + (0x04 * 4) + j * 0x0C;
-            GX::IndTexStageID indTexStage = GX::IndTexStageID::STAGE0;
-            GX::IndTexFormat indTexFormat = GX::IndTexFormat::_8;
-            GX::IndTexBiasSel indTexBiasSel = GX::IndTexBiasSel::NONE;
-            GX::IndTexAlphaSel indTexAlphaSel = GX::IndTexAlphaSel::OFF;
-            GX::IndTexMtxID indTexMatrix = GX::IndTexMtxID::OFF;
-            GX::IndTexWrap indTexWrapS = GX::IndTexWrap::OFF;
-            GX::IndTexWrap indTexWrapT = GX::IndTexWrap::OFF;
+            GX::IndTexStageID_t indTexStage = GX::IndTexStageID::STAGE0;
+            GX::IndTexFormat_t indTexFormat = GX::IndTexFormat::_8;
+            GX::IndTexBiasSel_t indTexBiasSel = GX::IndTexBiasSel::NONE;
+            GX::IndTexAlphaSel_t indTexAlphaSel = GX::IndTexAlphaSel::OFF;
+            GX::IndTexMtxID_t indTexMatrix = GX::IndTexMtxID::OFF;
+            GX::IndTexWrap_t indTexWrapS = GX::IndTexWrap::OFF;
+            GX::IndTexWrap_t indTexWrapT = GX::IndTexWrap::OFF;
             bool indTexAddPrev = false;
             bool indTexUseOrigLOD = false;
 
@@ -1137,17 +1137,17 @@ void BmdFile::readMAT3()
             {
                 file->position(sectionStart + indTexStageOffset);
 
-                indTexStage = GX::IndTexStageID(file->readByte());
-                indTexFormat = GX::IndTexFormat(file->readByte());
-                indTexBiasSel = GX::IndTexBiasSel(file->readByte());
-                indTexMatrix = GX::IndTexMtxID(file->readByte());
+                indTexStage = GX::IndTexStageID_t(file->readByte());
+                indTexFormat = GX::IndTexFormat_t(file->readByte());
+                indTexBiasSel = GX::IndTexBiasSel_t(file->readByte());
+                indTexMatrix = GX::IndTexMtxID_t(file->readByte());
                 assert(indTexMatrix <= GX::IndTexMtxID::T2);
 
-                indTexWrapS = GX::IndTexWrap(file->readByte());
-                indTexWrapT = GX::IndTexWrap(file->readByte());
+                indTexWrapS = GX::IndTexWrap_t(file->readByte());
+                indTexWrapT = GX::IndTexWrap_t(file->readByte());
                 indTexAddPrev = file->readByte();
                 indTexUseOrigLOD = file->readByte();
-                indTexAlphaSel = GX::IndTexAlphaSel(file->readByte());
+                indTexAlphaSel = GX::IndTexAlphaSel_t(file->readByte());
             }
 
             tevStages.push_back(GX::TevStage{
@@ -1179,10 +1179,10 @@ void BmdFile::readMAT3()
         uint32_t alphaTestOffset = alphaTestTableOffset + alphaTestIndex * 0x08;
         file->position(sectionStart + alphaTestOffset);
 
-        GX::CompareType compareA = GX::CompareType(file->readByte());
+        GX::CompareType_t compareA = GX::CompareType_t(file->readByte());
         uint8_t referenceA = file->readByte() / 0xFF; // TODO should this be a float?
-        GX::AlphaOp op = GX::AlphaOp(file->readByte());
-        GX::CompareType compareB = GX::CompareType(file->readByte());
+        GX::AlphaOp_t op = GX::AlphaOp_t(file->readByte());
+        GX::CompareType_t compareB = GX::CompareType_t(file->readByte());
         uint8_t referenceB = file->readByte() / 0xFF;
         GX::AlphaTest alphaTest = { op, compareA, referenceA, compareB, referenceB };
 
@@ -1190,19 +1190,19 @@ void BmdFile::readMAT3()
         uint32_t blendModeOffset = blendModeTableOffset + blendModeIndex * 0x04;
         file->position(sectionStart + blendModeOffset);
 
-        GX::BlendMode blendMode = GX::BlendMode(file->readByte());
-        GX::BlendFactor blendSrcFactor = GX::BlendFactor(file->readByte());
-        GX::BlendFactor blendDstFactor = GX::BlendFactor(file->readByte());
-        GX::LogicOp blendLogicOp = GX::LogicOp(file->readByte());
+        GX::BlendMode_t blendMode = GX::BlendMode_t(file->readByte());
+        GX::BlendFactor_t blendSrcFactor = GX::BlendFactor_t(file->readByte());
+        GX::BlendFactor_t blendDstFactor = GX::BlendFactor_t(file->readByte());
+        GX::LogicOp_t blendLogicOp = GX::LogicOp_t(file->readByte());
 
         file->position(sectionStart + cullModeTableOffset + cullModeIndex * 0x04);
-        GX::CullMode cullMode = GX::CullMode(file->readInt());
+        GX::CullMode_t cullMode = GX::CullMode_t(file->readInt());
 
         uint32_t zModeOffset = zModeTableOffset + zModeIndex * 4;
         file->position(zModeOffset);
 
         bool depthTest = file->readByte();
-        GX::CompareType depthFunc = GX::CompareType(file->readByte());
+        GX::CompareType_t depthFunc = GX::CompareType_t(file->readByte());
         bool depthWrite = file->readByte();
 
         file->position(sectionStart + materialEntryIndex + 0x144);
@@ -1211,7 +1211,7 @@ void BmdFile::readMAT3()
         uint32_t fogInfoOffset = fogInfoTableOffset + fogInfoIndex * 0x2C;
         file->position(sectionStart + fogInfoOffset);
 
-        GX::FogType fogType = GX::FogType(file->readByte());
+        GX::FogType_t fogType = GX::FogType_t(file->readByte());
         bool fogAdjEnabled = file->readByte();
         uint16_t fogAdjCenter = file->readShort();
         float fogStartZ = file->readFloat();
@@ -1357,23 +1357,23 @@ GX::BTI_Texture BmdFile::readBTI(uint32_t absoluteStartIndex, const QString& nam
 {
     file->position(absoluteStartIndex);
 
-    GX::TexFormat format = GX::TexFormat(file->readByte());
+    GX::TexFormat_t format = GX::TexFormat_t(file->readByte());
     file->skip(0x01);
 
     uint16_t width = file->readShort();
     uint16_t height = file->readShort();
 
-    GX::WrapMode wrapS = GX::WrapMode(file->readByte());
-    GX::WrapMode wrapT = GX::WrapMode(file->readByte());
+    GX::WrapMode_t wrapS = GX::WrapMode_t(file->readByte());
+    GX::WrapMode_t wrapT = GX::WrapMode_t(file->readByte());
     file->skip(0x01);
 
-    GX::TexPalette paletteFormat = GX::TexPalette(file->readByte());
+    GX::TexPalette_t paletteFormat = GX::TexPalette_t(file->readByte());
     uint16_t paletteCount = file->readShort();
     uint32_t paletteOffset = file->readInt();
     file->skip(0x04);
 
-    GX::TexFilter minFilter = GX::TexFilter(file->readByte());
-    GX::TexFilter magFilter = GX::TexFilter(file->readByte());
+    GX::TexFilter_t minFilter = GX::TexFilter_t(file->readByte());
+    GX::TexFilter_t magFilter = GX::TexFilter_t(file->readByte());
 
     float minLOD = file->readByte() / 8.f;
     float maxLOD = file->readByte() / 8.f;
@@ -1493,13 +1493,13 @@ GX::ColorChannelControl BmdFile::readColorChannel(uint32_t absoluteColorChanTabl
         bool lightingEnabled = file->readByte();
         //assert(lightingEnabled < 2);
 
-        GX::ColorSrc matColorSource = GX::ColorSrc(file->readByte());
+        GX::ColorSrc_t matColorSource = GX::ColorSrc_t(file->readByte());
         uint8_t litMask = file->readByte();
-        GX::DiffuseFunction diffuseFunction = GX::DiffuseFunction(file->readByte());
+        GX::DiffuseFunction_t diffuseFunction = GX::DiffuseFunction_t(file->readByte());
 
         uint8_t attnFn = file->readByte();
 
-        GX::AttenuationFunction attenuationFunction;
+        GX::AttenuationFunction_t attenuationFunction;
         switch(attnFn)
         {
             case 0:
@@ -1516,16 +1516,16 @@ GX::ColorChannelControl BmdFile::readColorChannel(uint32_t absoluteColorChanTabl
                 assert(false); // invalid attnFn
         }
 
-        GX::ColorSrc ambColorSource = GX::ColorSrc(file->readByte());
+        GX::ColorSrc_t ambColorSource = GX::ColorSrc_t(file->readByte());
 
         return { lightingEnabled, matColorSource, ambColorSource, litMask, diffuseFunction, attenuationFunction };
     } else {
         bool lightingEnabled = false;
-        GX::ColorSrc matColorSource = GX::ColorSrc::REG;
+        GX::ColorSrc_t matColorSource = GX::ColorSrc::REG;
         uint8_t litMask = 0;
-        GX::DiffuseFunction diffuseFunction = GX::DiffuseFunction::CLAMP;
-        GX::AttenuationFunction attenuationFunction = GX::AttenuationFunction::NONE;
-        GX::ColorSrc ambColorSource = GX::ColorSrc::REG;
+        GX::DiffuseFunction_t diffuseFunction = GX::DiffuseFunction::CLAMP;
+        GX::AttenuationFunction_t attenuationFunction = GX::AttenuationFunction::NONE;
+        GX::ColorSrc_t ambColorSource = GX::ColorSrc::REG;
         return { lightingEnabled, matColorSource, ambColorSource, litMask, diffuseFunction, attenuationFunction };
     }
 }

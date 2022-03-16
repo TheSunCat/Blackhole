@@ -7,12 +7,14 @@
 #include <vector>
 #include <span>
 
+#include "include/Util.h"
+
 namespace GX
 {
 
 // huge thanks to noclip.website for these data structures!
 
-enum class TexFormat {
+BLACKHOLE_ENUM_START(TexFormat) {
     I4 = 0x0,
     I8 = 0x1,
     IA4 = 0x2,
@@ -25,25 +27,28 @@ enum class TexFormat {
     C14X2 = 0xA,
     CMPR = 0xE, /*!< Compressed */
 };
+BLACKHOLE_ENUM_END(TexFormat)
 
-enum class TexPalette {
+BLACKHOLE_ENUM_START(TexPalette) {
     IA8 = 0x00,
     RGB565 = 0x01,
     RGB5A3 = 0x02,
 };
+BLACKHOLE_ENUM_END(TexPalette)
 
-enum class WrapMode {
+BLACKHOLE_ENUM_START(WrapMode) {
     CLAMP = 0,
     REPEAT = 1,
     MIRROR = 2,
 };
+BLACKHOLE_ENUM_END(WrapMode)
 
 // ugh Windows.h
 #ifdef NEAR
 #undef NEAR
 #endif
 
-enum class TexFilter {
+BLACKHOLE_ENUM_START(TexFilter) {
     NEAR = 0,               // Point sampling, no mipmap
     LINEAR = 1,             // Bilinear filtering, no mipmap
     NEAR_MIP_NEAR = 2,      // Point sampling, discrete mipmap
@@ -51,38 +56,44 @@ enum class TexFilter {
     NEAR_MIP_LIN = 4,       // Point sampling, linear mipmap
     LIN_MIP_LIN = 5,        // Trilinear filtering
 };
+BLACKHOLE_ENUM_END(TexFilter)
 
-enum class CullMode {
+BLACKHOLE_ENUM_START(CullMode) {
     NONE = 0,               // Do not cull any primitives.
     FRONT = 1,              // Cull front-facing primitives.
     BACK = 2,               // Cull back-facing primitives.
     ALL = 3,                // Cull all primitives.
 };
+BLACKHOLE_ENUM_END(CullMode)
 
-enum class ColorSrc {
+BLACKHOLE_ENUM_START(ColorSrc) {
     REG = 0,
     VTX = 1,
 };
+BLACKHOLE_ENUM_END(ColorSrc)
 
-enum class DiffuseFunction {
+BLACKHOLE_ENUM_START(DiffuseFunction) {
     NONE = 0x00,
     SIGN = 0x01,
     CLAMP = 0x02,
 };
+BLACKHOLE_ENUM_END(DiffuseFunction)
 
-enum class AttenuationFunction {
+BLACKHOLE_ENUM_START(AttenuationFunction) {
     SPEC = 0x00, // Specular attenuation
     SPOT = 0x01, // Distance/spotlight attenuation
     NONE,
 };
+BLACKHOLE_ENUM_END(AttenuationFunction)
 
-struct ColorChannelControl {
+struct ColorChannelControl
+{
     bool lightingEnabled;
-    ColorSrc matColorSource;
-    ColorSrc ambColorSource;
+    ColorSrc_t matColorSource;
+    ColorSrc_t ambColorSource;
     uint32_t litMask;
-    DiffuseFunction diffuseFunction;
-    AttenuationFunction attenuationFunction;
+    DiffuseFunction_t diffuseFunction;
+    AttenuationFunction_t attenuationFunction;
 };
 
 struct LightChannelControl
@@ -91,7 +102,7 @@ struct LightChannelControl
     ColorChannelControl colorChannel;
 };
 
-enum class TexMtxMapMode {
+BLACKHOLE_ENUM_START(TexMtxMapMode) {
     None = 0x00,
     // Uses "Basic" conventions, no -1...1 remap.
     // Peach Beach uses EnvmapBasic, not sure on what yet...
@@ -111,8 +122,9 @@ enum class TexMtxMapMode {
     EnvmapOldEffectMtx = 0x0A,
     EnvmapEffectMtx = 0x0B,
 };
+BLACKHOLE_ENUM_END(TexMtxMapMode)
 
-enum class TexGenType {
+BLACKHOLE_ENUM_START(TexGenType) {
     MTX3x4 = 0,
     MTX2x4 = 1,
     BUMP0 = 2,
@@ -125,8 +137,9 @@ enum class TexGenType {
     BUMP7 = 9,
     SRTG = 10,
 };
+BLACKHOLE_ENUM_END(TexGenType)
 
-enum class TexGenSrc {
+BLACKHOLE_ENUM_START(TexGenSrc) {
     POS = 0,
     NRM = 1,
     BINRM = 2,
@@ -149,8 +162,9 @@ enum class TexGenSrc {
     COLOR0 = 19,
     COLOR1 = 20,
 };
+BLACKHOLE_ENUM_END(TexGenSrc)
 
-enum class PosNrmMatrix {
+BLACKHOLE_ENUM_START(PosNrmMatrix) {
     PNMTX0 = 0,
     PNMTX1 = 3,
     PNMTX2 = 6,
@@ -162,8 +176,9 @@ enum class PosNrmMatrix {
     PNMTX8 = 24,
     PNMTX9 = 27,
 };
+BLACKHOLE_ENUM_END(PosNrmMatrix)
 
-enum class TexGenMatrix {
+BLACKHOLE_ENUM_START(TexGenMatrix) {
     IDENTITY = 60,
     TEXMTX0 = 30,
     TEXMTX1 = 33,
@@ -188,8 +203,9 @@ enum class TexGenMatrix {
     PNMTX8 = 24,
     PNMTX9 = 27,
 };
+BLACKHOLE_ENUM_END(TexGenMatrix)
 
-enum class PostTexGenMatrix {
+BLACKHOLE_ENUM_START(PostTexGenMatrix) {
     PTTEXMTX0  = 64,
     PTTEXMTX1  = 67,
     PTTEXMTX2  = 70,
@@ -212,16 +228,18 @@ enum class PostTexGenMatrix {
     PTTEXMTX19 = 121,
     PTIDENTITY = 125,
 };
+BLACKHOLE_ENUM_END(PostTexGenMatrix)
 
-struct TexGen {
-    TexGenType type;
-    TexGenSrc source;
-    TexGenMatrix matrix;
+struct TexGen
+{
+    TexGenType_t type;
+    TexGenSrc_t source;
+    TexGenMatrix_t matrix;
     bool normalize;
-    PostTexGenMatrix postMatrix;
+    PostTexGenMatrix_t postMatrix;
 };
 
-enum class TevOp {
+BLACKHOLE_ENUM_START(TevOp) {
     ADD = 0,
     SUB = 1,
     COMP_R8_GT = 8,
@@ -235,8 +253,9 @@ enum class TevOp {
     COMP_A8_GT = COMP_RGB8_GT,
     COMP_A8_EQ = COMP_RGB8_EQ,
 };
+BLACKHOLE_ENUM_END(TevOp)
 
-enum class TevBias {
+BLACKHOLE_ENUM_START(TevBias) {
     ZERO = 0,
     ADDHALF = 1,
     SUBHALF = 2,
@@ -244,8 +263,9 @@ enum class TevBias {
     // Used to denote the compare ops to the HW.
     $HWB_COMPARE = 3,
 };
+BLACKHOLE_ENUM_END(TevBias)
 
-enum class TevScale {
+BLACKHOLE_ENUM_START(TevScale) {
     SCALE_1 = 0,
     SCALE_2 = 1,
     SCALE_4 = 2,
@@ -257,8 +277,9 @@ enum class TevScale {
     $HWB_BGR24 = 2,
     $HWB_RGB8 = 3,
 };
+BLACKHOLE_ENUM_END(TevScale)
 
-enum class CC {
+BLACKHOLE_ENUM_START(CC) {
     CPREV = 0,              // Use the color value from previous TEV stage
     APREV = 1,              // Use the alpha value from previous TEV stage
     C0 = 2,                 // Use the color value from the color/output register 0
@@ -276,8 +297,9 @@ enum class CC {
     KONST = 14,
     ZERO = 15,              // Use to pass zero value
 };
+BLACKHOLE_ENUM_END(CC)
 
-enum class CA {
+BLACKHOLE_ENUM_START(CA) {
     APREV = 0,              // Use the alpha value from previous TEV stage
     A0 = 1,                 // Use the alpha value from the color/output register 0
     A1 = 2,                 // Use the alpha value from the color/output register 1
@@ -287,15 +309,17 @@ enum class CA {
     KONST = 6,
     ZERO = 7,               // Use to pass zero value
 };
+BLACKHOLE_ENUM_END(CA)
 
-enum class Register {
+BLACKHOLE_ENUM_START(Register) {
     PREV = 0,
     REG0 = 1,
     REG1 = 2,
     REG2 = 3,
 };
+BLACKHOLE_ENUM_END(Register)
 
-enum class TexCoordID : uint32_t {
+BLACKHOLE_ENUM_START(TexCoordID) {
     TEXCOORD0 = 0,
     TEXCOORD1 = 1,
     TEXCOORD2 = 2,
@@ -306,8 +330,9 @@ enum class TexCoordID : uint32_t {
     TEXCOORD7 = 7,
     TEXCOORD_NULL = 0xFF,
 };
+BLACKHOLE_ENUM_END(TexCoordID)
 
-enum class TexMapID {
+BLACKHOLE_ENUM_START(TexMapID) {
     TEXMAP0 = 0,
     TEXMAP1 = 1,
     TEXMAP2 = 2,
@@ -318,8 +343,9 @@ enum class TexMapID {
     TEXMAP7 = 7,
     TEXMAP_NULL = 0xFF,
 };
+BLACKHOLE_ENUM_END(TexMapID)
 
-enum class ColorChannelID {
+BLACKHOLE_ENUM_START(ColorChannelID) {
     COLOR0 = 0,
     COLOR1 = 1,
     ALPHA0 = 2,
@@ -331,16 +357,18 @@ enum class ColorChannelID {
     ALPHA_BUMP_N = 8,
     COLOR_NULL = 0xFF,
 };
+BLACKHOLE_ENUM_END(ColorChannelID)
 
-enum class RasColorChannelID {
+BLACKHOLE_ENUM_START(RasColorChannelID) {
     COLOR0A0     = 0,
     COLOR1A1     = 1,
     ALPHA_BUMP   = 5,
     ALPHA_BUMP_N = 6,
     COLOR_ZERO   = 7,
 };
+BLACKHOLE_ENUM_END(RasColorChannelID)
 
-enum class KonstColorSel {
+BLACKHOLE_ENUM_START(KonstColorSel) {
     KCSEL_1   = 0x00,       // constant 1.0
     KCSEL_7_8 = 0x01,       // constant 7/8
     KCSEL_6_8 = 0x02,       // constant 6/8
@@ -370,8 +398,9 @@ enum class KonstColorSel {
     KCSEL_K2_A = 0x1E,      //  K2[AAA] register
     KCSEL_K3_A = 0x1F,      //  K3[AAA] register
 };
+BLACKHOLE_ENUM_END(KonstColorSel)
 
-enum class KonstAlphaSel {
+BLACKHOLE_ENUM_START(KonstAlphaSel) {
     KASEL_1    = 0x00,      //  constant 1.0
     KASEL_7_8  = 0x01,      //  constant 7/8
     KASEL_6_8  = 0x02,      //  constant 6/8
@@ -397,8 +426,9 @@ enum class KonstAlphaSel {
     KASEL_K2_A = 0x1E,      //  K2[A] register
     KASEL_K3_A = 0x1F,      //  K3[A] register
 };
+BLACKHOLE_ENUM_END(KonstAlphaSel)
 
-enum class IndTexBiasSel {
+BLACKHOLE_ENUM_START(IndTexBiasSel) {
     NONE = 0,
     S = 1,
     T = 2,
@@ -408,22 +438,25 @@ enum class IndTexBiasSel {
     TU = 6,
     STU = 7,
 };
+BLACKHOLE_ENUM_END(IndTexBiasSel)
 
-enum class IndTexAlphaSel {
+BLACKHOLE_ENUM_START(IndTexAlphaSel) {
     OFF = 0,
     S = 1,
     T = 2,
     U = 3,
 };
+BLACKHOLE_ENUM_END(IndTexAlphaSel)
 
-enum class IndTexFormat {
+BLACKHOLE_ENUM_START(IndTexFormat) {
     _8 = 0,                 // 8-bit texture offset
     _5 = 1,                 // 5-bit texture offset
     _4 = 2,                 // 4-bit texture offset
     _3 = 3,                 // 3-bit texture offset
 };
+BLACKHOLE_ENUM_END(IndTexFormat)
 
-enum class IndTexWrap {
+BLACKHOLE_ENUM_START(IndTexWrap) {
     OFF = 0,
     _256 = 1,
     _128 = 2,
@@ -432,15 +465,17 @@ enum class IndTexWrap {
     _16 = 5,
     _0 = 6,
 };
+BLACKHOLE_ENUM_END(IndTexWrap)
 
-enum class IndTexStageID {
+BLACKHOLE_ENUM_START(IndTexStageID) {
     STAGE0 = 0,
     STAGE1 = 1,
     STAGE2 = 2,
     STAGE3 = 3,
 };
+BLACKHOLE_ENUM_END(IndTexStageID)
 
-enum class IndTexMtxID {
+BLACKHOLE_ENUM_START(IndTexMtxID) {
     OFF = 0,
     _0 = 1,
     _1 = 2,
@@ -452,15 +487,17 @@ enum class IndTexMtxID {
     T1 = 10,
     T2 = 11,
 };
+BLACKHOLE_ENUM_END(IndTexMtxID)
 
-enum class TevColorChan {
+BLACKHOLE_ENUM_START(TevColorChan) {
     R = 0,
     G = 1,
     B = 2,
     A = 3,
 };
+BLACKHOLE_ENUM_END(TevColorChan)
 
-typedef const std::array<TevColorChan, 4> SwapTable;
+typedef const std::array<TevColorChan_t, 4> SwapTable;
 
 constexpr std::array<SwapTable, 4> tevDefaultSwapTables{
     SwapTable{TevColorChan::R, TevColorChan::G, TevColorChan::B, TevColorChan::A},
@@ -469,46 +506,47 @@ constexpr std::array<SwapTable, 4> tevDefaultSwapTables{
     SwapTable{TevColorChan::B, TevColorChan::B, TevColorChan::B, TevColorChan::A}
 };
 
-struct TevStage {
-    CC colorInA, colorInB, colorInC, colorInD;
-    TevOp colorOp;
-    TevBias colorBias;
-    TevScale colorScale;
+struct TevStage
+{
+    CC_t colorInA, colorInB, colorInC, colorInD;
+    TevOp_t colorOp;
+    TevBias_t colorBias;
+    TevScale_t colorScale;
     bool colorClamp;
-    Register colorRegID;
+    Register_t colorRegID;
 
-    CA alphaInA, alphaInB, alphaInC, alphaInD;
-    TevOp alphaOp;
-    TevBias alphaBias;
-    TevScale alphaScale;
+    CA_t alphaInA, alphaInB, alphaInC, alphaInD;
+    TevOp_t alphaOp;
+    TevBias_t alphaBias;
+    TevScale_t alphaScale;
     bool alphaClamp;
-    Register alphaRegID;
+    Register_t alphaRegID;
 
     // SetTevOrder
-    TexCoordID texCoordID;
-    TexMapID texMap;
-    RasColorChannelID channelID;
+    TexCoordID_t texCoordID;
+    TexMapID_t texMap;
+    RasColorChannelID_t channelID;
 
-    KonstColorSel konstColorSel;
-    KonstAlphaSel konstAlphaSel;
+    KonstColorSel_t konstColorSel;
+    KonstAlphaSel_t konstAlphaSel;
 
     // SetTevSwapMode / SetTevSwapModeTable
     SwapTable rasSwapTable; // TODO optional
     SwapTable texSwapTable; // TODO optional
 
     // SetTevIndirect
-    IndTexStageID indTexStage;
-    IndTexFormat indTexFormat;
-    IndTexBiasSel indTexBiasSel;
-    IndTexAlphaSel indTexAlphaSel;
-    IndTexMtxID indTexMatrix;
-    IndTexWrap indTexWrapS;
-    IndTexWrap indTexWrapT;
+    IndTexStageID_t indTexStage;
+    IndTexFormat_t indTexFormat;
+    IndTexBiasSel_t indTexBiasSel;
+    IndTexAlphaSel_t indTexAlphaSel;
+    IndTexMtxID_t indTexMatrix;
+    IndTexWrap_t indTexWrapS;
+    IndTexWrap_t indTexWrapT;
     bool indTexAddPrev;
     bool indTexUseOrigLOD;
 };
 
-enum class IndTexScale {
+BLACKHOLE_ENUM_START(IndTexScale) {
     _1 = 0,
     _2 = 1,
     _4 = 2,
@@ -519,22 +557,25 @@ enum class IndTexScale {
     _128 = 7,
     _256 = 8,
 };
+BLACKHOLE_ENUM_END(IndTexScale)
 
-struct IndTexStage {
-    TexCoordID texCoordId;
-    TexMapID texture;
-    IndTexScale scaleS;
-    IndTexScale scaleT;
+struct IndTexStage
+{
+    TexCoordID_t texCoordId;
+    TexMapID_t texture;
+    IndTexScale_t scaleS;
+    IndTexScale_t scaleT;
 };
 
-enum class AlphaOp {
+BLACKHOLE_ENUM_START(AlphaOp) {
     AND = 0,
     OR = 1,
     XOR = 2,
     XNOR = 3,
 };
+BLACKHOLE_ENUM_END(AlphaOp)
 
-enum class CompareType {
+BLACKHOLE_ENUM_START(CompareType) {
     NEVER = 0,
     LESS = 1,
     EQUAL = 2,
@@ -544,16 +585,18 @@ enum class CompareType {
     GEQUAL = 6,
     ALWAYS = 7,
 };
+BLACKHOLE_ENUM_END(CompareType)
 
-struct AlphaTest {
-    AlphaOp op;
-    CompareType compareA;
+struct AlphaTest
+{
+    AlphaOp_t op;
+    CompareType_t compareA;
     uint32_t referenceA;
-    CompareType compareB;
+    CompareType_t compareB;
     uint32_t referenceB;
 };
 
-enum class FogType {
+BLACKHOLE_ENUM_START(FogType) {
     NONE          = 0x00,
 
     PERSP_LIN     = 0x02,
@@ -568,15 +611,17 @@ enum class FogType {
     ORTHO_REVEXP  = 0x0E,
     ORTHO_REVEXP2 = 0x0F,
 };
+BLACKHOLE_ENUM_END(FogType)
 
-enum class BlendMode {
+BLACKHOLE_ENUM_START(BlendMode) {
     NONE = 0,
     BLEND = 1,
     LOGIC = 2,
     SUBTRACT = 3,
 };
+BLACKHOLE_ENUM_END(BlendMode)
 
-enum class BlendFactor {
+BLACKHOLE_ENUM_START(BlendFactor) {
     ZERO = 0,
     ONE = 1,
     SRCCLR = 2,
@@ -586,8 +631,9 @@ enum class BlendFactor {
     DSTALPHA = 6,
     INVDSTALPHA = 7,
 };
+BLACKHOLE_ENUM_END(BlendFactor)
 
-enum class LogicOp {
+BLACKHOLE_ENUM_START(LogicOp) {
     CLEAR = 0,
     AND = 1,
     REVAND = 2,
@@ -605,19 +651,21 @@ enum class LogicOp {
     NAND = 14,
     SET = 15,
 };
+BLACKHOLE_ENUM_END(LogicOp)
 
-struct RopInfo {
-    FogType fogType;
+struct RopInfo
+{
+    FogType_t fogType;
     bool fogAdjEnabled;
 
     bool depthTest;
-    CompareType depthFunc;
+    CompareType_t depthFunc;
     bool depthWrite;
 
-    BlendMode blendMode;
-    BlendFactor blendSrcFactor;
-    BlendFactor blendDstFactor;
-    LogicOp blendLogicOp;
+    BlendMode_t blendMode;
+    BlendFactor_t blendSrcFactor;
+    BlendFactor_t blendDstFactor;
+    LogicOp_t blendLogicOp;
 
     bool colorUpdate;
     bool alphaUpdate;
@@ -625,12 +673,13 @@ struct RopInfo {
     uint32_t dstAlpha; // TODO optional
 };
 
-struct Material {
+struct Material
+{
     // Debugging & ID
     QString name;
 
     // Polygon state
-    CullMode cullMode;
+    CullMode_t cullMode;
 
     // Vertex state
     std::vector<LightChannelControl> lightChannels;
@@ -654,7 +703,8 @@ struct Material {
     bool hasDynamicAlphaTest = false;
 };
 
-struct FogBlock {
+struct FogBlock
+{
     QColor color = QColor(0, 0, 0, 0);
     uint32_t A = 0;
     uint32_t B = 0;
@@ -672,15 +722,16 @@ struct Light
     QColor color;
 };
 
-struct BTI_Texture {
+struct BTI_Texture
+{
     QString name;
-    TexFormat format;
+    TexFormat_t format;
 
     uint16_t width, height;
 
-    WrapMode wrapS, wrapT;
+    WrapMode_t wrapS, wrapT;
 
-    TexFilter minFilter, magFilter;
+    TexFilter_t minFilter, magFilter;
 
     float minLOD, maxLOD;
     float lodBias;
@@ -689,7 +740,7 @@ struct BTI_Texture {
 
     std::span<const uint8_t> data;
 
-    TexPalette paletteFormat;
+    TexPalette_t paletteFormat;
     std::span<const uint8_t> paletteData;
 };
 

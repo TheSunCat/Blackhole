@@ -222,12 +222,12 @@ vec4 TevOverflow(vec4 a) { return vec4(TevOverflow(a.r), TevOverflow(a.g), TevOv
 
         QString generateLightChannels();
 
-        QString generateMulPntMatrixStatic(TexGenMatrix pnt, const QString& src, const QString& funcName = "Mul"); // Output is a vec3, src is a vec4.
+        QString generateMulPntMatrixStatic(TexGenMatrix_t pnt, const QString& src, const QString& funcName = "Mul"); // Output is a vec3, src is a vec4.
         QString generateMulPntMatrixDynamic(const QString& attrStr, const QString& src, const QString& funcName = "Mul"); // Output is a vec3, src is a vec4.
-        QString generateTexMtxIdxAttr(TexCoordID index);
+        QString generateTexMtxIdxAttr(TexCoordID_t index);
 
         // TexGen
-        QString generateTexGenSource(TexGenSrc src);
+        QString generateTexGenSource(TexGenSrc_t src);
         QString generatePostTexGenMatrixMult(TexGen texCoordGen, const QString& src);
         QString generateTexGenMatrixMult(uint32_t texCoordGenIndex, const QString& src);
         QString generateTexGenType(uint32_t texCoordGenIndex);
@@ -240,7 +240,7 @@ vec4 TevOverflow(vec4 a) { return vec4(TevOverflow(a.r), TevOverflow(a.g), TevOv
         QString generateTexCoordGetters();
 
         // IndTex
-        QString generateIndTexStageScaleN(IndTexScale scale);
+        QString generateIndTexStageScaleN(IndTexScale_t scale);
         QString generateIndTexStageScale(IndTexStage stage);
 
 

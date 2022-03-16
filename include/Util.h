@@ -10,6 +10,10 @@
 
 #include "ui/Blackhole.h"
 
+#define BLACKHOLE_ENUM_START(name) namespace name { enum name : uint8_t
+#define BLACKHOLE_ENUM_END(name) \
+}; typedef name::name name##_t;
+
 // TODO this looks horrid. is there a better way?
 template<class T>
 class Iterator
