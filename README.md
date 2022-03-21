@@ -11,7 +11,7 @@ git clone --recursive https://github.com/RealTheSunCat/Blackhole
 ```
 Make sure to clone Blackhole **recursively**, or it will not build!
 
-Install the Qt6 and Qt5-compat libraries with your preferred package manager.
+Install the Qt5 libraries with your preferred package manager.
 You will also need CMake installed.
 
 On Arch Linux, the packages can be installed via the following command:
