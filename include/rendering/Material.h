@@ -81,73 +81,73 @@ vec4 TevOverflow(vec4 a) { return vec4(TevOverflow(a.r), TevOverflow(a.g), TevOv
     enum class GfxFormat;
 
     constexpr GfxFormat makeFormat(FormatTypeFlags type, FormatCompFlags comp, FormatFlags flags) {
-        return GfxFormat((uint8_t(type) << 16) | (uint8_t(comp) << 8) | uint8_t(flags));
+        return GfxFormat((uint64_t(type) << 16) | (uint64_t(comp) << 8) | uint64_t(flags));
     }
 
     enum class GfxFormat {
-        F16_R           = uint8_t(makeFormat(FormatTypeFlags::F16, FormatCompFlags::R,    FormatFlags::None)),
-        F16_RG          = uint8_t(makeFormat(FormatTypeFlags::F16, FormatCompFlags::RG,   FormatFlags::None)),
-        F16_RGB         = uint8_t(makeFormat(FormatTypeFlags::F16, FormatCompFlags::RGB,  FormatFlags::None)),
-        F16_RGBA        = uint8_t(makeFormat(FormatTypeFlags::F16, FormatCompFlags::RGBA, FormatFlags::None)),
-        F32_R           = uint8_t(makeFormat(FormatTypeFlags::F32, FormatCompFlags::R,    FormatFlags::None)),
-        F32_RG          = uint8_t(makeFormat(FormatTypeFlags::F32, FormatCompFlags::RG,   FormatFlags::None)),
-        F32_RGB         = uint8_t(makeFormat(FormatTypeFlags::F32, FormatCompFlags::RGB,  FormatFlags::None)),
-        F32_RGBA        = uint8_t(makeFormat(FormatTypeFlags::F32, FormatCompFlags::RGBA, FormatFlags::None)),
-        U8_R            = uint8_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::R,    FormatFlags::None)),
-        U8_R_NORM       = uint8_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::R,    FormatFlags::Normalized)),
-        U8_RG           = uint8_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RG,   FormatFlags::None)),
-        U8_RG_NORM      = uint8_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RG,   FormatFlags::Normalized)),
-        U8_RGB          = uint8_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RGB,  FormatFlags::None)),
-        U8_RGB_NORM     = uint8_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RGB,  FormatFlags::Normalized)),
-        U8_RGB_SRGB     = uint8_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RGB,  FormatFlags(uint8_t(FormatFlags::sRGB) | uint8_t(FormatFlags::Normalized)))),
-        U8_RGBA         = uint8_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RGBA, FormatFlags::None)),
-        U8_RGBA_NORM    = uint8_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RGBA, FormatFlags::Normalized)),
-        U8_RGBA_SRGB    = uint8_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RGBA, FormatFlags(uint8_t(FormatFlags::sRGB) | uint8_t(FormatFlags::Normalized)))),
-        U16_R           = uint8_t(makeFormat(FormatTypeFlags::U16, FormatCompFlags::R,    FormatFlags::None)),
-        U16_R_NORM      = uint8_t(makeFormat(FormatTypeFlags::U16, FormatCompFlags::R,    FormatFlags::Normalized)),
-        U16_RG_NORM     = uint8_t(makeFormat(FormatTypeFlags::U16, FormatCompFlags::RG,   FormatFlags::Normalized)),
-        U16_RGBA_NORM   = uint8_t(makeFormat(FormatTypeFlags::U16, FormatCompFlags::RGBA, FormatFlags::Normalized)),
-        U16_RGB         = uint8_t(makeFormat(FormatTypeFlags::U16, FormatCompFlags::RGB,  FormatFlags::None)),
-        U32_R           = uint8_t(makeFormat(FormatTypeFlags::U32, FormatCompFlags::R,    FormatFlags::None)),
-        U32_RG          = uint8_t(makeFormat(FormatTypeFlags::U32, FormatCompFlags::RG,   FormatFlags::None)),
-        S8_R            = uint8_t(makeFormat(FormatTypeFlags::S8,  FormatCompFlags::R,    FormatFlags::None)),
-        S8_R_NORM       = uint8_t(makeFormat(FormatTypeFlags::S8,  FormatCompFlags::R,    FormatFlags::Normalized)),
-        S8_RG_NORM      = uint8_t(makeFormat(FormatTypeFlags::S8,  FormatCompFlags::RG,   FormatFlags::Normalized)),
-        S8_RGB_NORM     = uint8_t(makeFormat(FormatTypeFlags::S8,  FormatCompFlags::RGB,  FormatFlags::Normalized)),
-        S8_RGBA_NORM    = uint8_t(makeFormat(FormatTypeFlags::S8,  FormatCompFlags::RGBA, FormatFlags::Normalized)),
-        S16_R           = uint8_t(makeFormat(FormatTypeFlags::S16, FormatCompFlags::R,    FormatFlags::None)),
-        S16_RG          = uint8_t(makeFormat(FormatTypeFlags::S16, FormatCompFlags::RG,   FormatFlags::None)),
-        S16_RG_NORM     = uint8_t(makeFormat(FormatTypeFlags::S16, FormatCompFlags::RG,   FormatFlags::Normalized)),
-        S16_RGB_NORM    = uint8_t(makeFormat(FormatTypeFlags::S16, FormatCompFlags::RGB,  FormatFlags::Normalized)),
-        S16_RGBA        = uint8_t(makeFormat(FormatTypeFlags::S16, FormatCompFlags::RGBA, FormatFlags::None)),
-        S16_RGBA_NORM   = uint8_t(makeFormat(FormatTypeFlags::S16, FormatCompFlags::RGBA, FormatFlags::Normalized)),
-        S32_R           = uint8_t(makeFormat(FormatTypeFlags::S32, FormatCompFlags::R,    FormatFlags::None)),
+        F16_R           = uint64_t(makeFormat(FormatTypeFlags::F16, FormatCompFlags::R,    FormatFlags::None)),
+        F16_RG          = uint64_t(makeFormat(FormatTypeFlags::F16, FormatCompFlags::RG,   FormatFlags::None)),
+        F16_RGB         = uint64_t(makeFormat(FormatTypeFlags::F16, FormatCompFlags::RGB,  FormatFlags::None)),
+        F16_RGBA        = uint64_t(makeFormat(FormatTypeFlags::F16, FormatCompFlags::RGBA, FormatFlags::None)),
+        F32_R           = uint64_t(makeFormat(FormatTypeFlags::F32, FormatCompFlags::R,    FormatFlags::None)),
+        F32_RG          = uint64_t(makeFormat(FormatTypeFlags::F32, FormatCompFlags::RG,   FormatFlags::None)),
+        F32_RGB         = uint64_t(makeFormat(FormatTypeFlags::F32, FormatCompFlags::RGB,  FormatFlags::None)),
+        F32_RGBA        = uint64_t(makeFormat(FormatTypeFlags::F32, FormatCompFlags::RGBA, FormatFlags::None)),
+        U8_R            = uint64_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::R,    FormatFlags::None)),
+        U8_R_NORM       = uint64_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::R,    FormatFlags::Normalized)),
+        U8_RG           = uint64_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RG,   FormatFlags::None)),
+        U8_RG_NORM      = uint64_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RG,   FormatFlags::Normalized)),
+        U8_RGB          = uint64_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RGB,  FormatFlags::None)),
+        U8_RGB_NORM     = uint64_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RGB,  FormatFlags::Normalized)),
+        U8_RGB_SRGB     = uint64_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RGB,  FormatFlags(uint64_t(FormatFlags::sRGB) | uint64_t(FormatFlags::Normalized)))),
+        U8_RGBA         = uint64_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RGBA, FormatFlags::None)),
+        U8_RGBA_NORM    = uint64_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RGBA, FormatFlags::Normalized)),
+        U8_RGBA_SRGB    = uint64_t(makeFormat(FormatTypeFlags::U8,  FormatCompFlags::RGBA, FormatFlags(uint64_t(FormatFlags::sRGB) | uint64_t(FormatFlags::Normalized)))),
+        U16_R           = uint64_t(makeFormat(FormatTypeFlags::U16, FormatCompFlags::R,    FormatFlags::None)),
+        U16_R_NORM      = uint64_t(makeFormat(FormatTypeFlags::U16, FormatCompFlags::R,    FormatFlags::Normalized)),
+        U16_RG_NORM     = uint64_t(makeFormat(FormatTypeFlags::U16, FormatCompFlags::RG,   FormatFlags::Normalized)),
+        U16_RGBA_NORM   = uint64_t(makeFormat(FormatTypeFlags::U16, FormatCompFlags::RGBA, FormatFlags::Normalized)),
+        U16_RGB         = uint64_t(makeFormat(FormatTypeFlags::U16, FormatCompFlags::RGB,  FormatFlags::None)),
+        U32_R           = uint64_t(makeFormat(FormatTypeFlags::U32, FormatCompFlags::R,    FormatFlags::None)),
+        U32_RG          = uint64_t(makeFormat(FormatTypeFlags::U32, FormatCompFlags::RG,   FormatFlags::None)),
+        S8_R            = uint64_t(makeFormat(FormatTypeFlags::S8,  FormatCompFlags::R,    FormatFlags::None)),
+        S8_R_NORM       = uint64_t(makeFormat(FormatTypeFlags::S8,  FormatCompFlags::R,    FormatFlags::Normalized)),
+        S8_RG_NORM      = uint64_t(makeFormat(FormatTypeFlags::S8,  FormatCompFlags::RG,   FormatFlags::Normalized)),
+        S8_RGB_NORM     = uint64_t(makeFormat(FormatTypeFlags::S8,  FormatCompFlags::RGB,  FormatFlags::Normalized)),
+        S8_RGBA_NORM    = uint64_t(makeFormat(FormatTypeFlags::S8,  FormatCompFlags::RGBA, FormatFlags::Normalized)),
+        S16_R           = uint64_t(makeFormat(FormatTypeFlags::S16, FormatCompFlags::R,    FormatFlags::None)),
+        S16_RG          = uint64_t(makeFormat(FormatTypeFlags::S16, FormatCompFlags::RG,   FormatFlags::None)),
+        S16_RG_NORM     = uint64_t(makeFormat(FormatTypeFlags::S16, FormatCompFlags::RG,   FormatFlags::Normalized)),
+        S16_RGB_NORM    = uint64_t(makeFormat(FormatTypeFlags::S16, FormatCompFlags::RGB,  FormatFlags::Normalized)),
+        S16_RGBA        = uint64_t(makeFormat(FormatTypeFlags::S16, FormatCompFlags::RGBA, FormatFlags::None)),
+        S16_RGBA_NORM   = uint64_t(makeFormat(FormatTypeFlags::S16, FormatCompFlags::RGBA, FormatFlags::Normalized)),
+        S32_R           = uint64_t(makeFormat(FormatTypeFlags::S32, FormatCompFlags::R,    FormatFlags::None)),
 
         // Packed texture formats.
-        U16_RGBA_5551   = uint8_t(makeFormat(FormatTypeFlags::U16_PACKED_5551, FormatCompFlags::RGBA, FormatFlags::Normalized)),
+        U16_RGBA_5551   = uint64_t(makeFormat(FormatTypeFlags::U16_PACKED_5551, FormatCompFlags::RGBA, FormatFlags::Normalized)),
 
         // Compressed
-        BC1             = uint8_t(makeFormat(FormatTypeFlags::BC1,       FormatCompFlags::RGBA, FormatFlags::Normalized)),
-        BC1_SRGB        = uint8_t(makeFormat(FormatTypeFlags::BC1,       FormatCompFlags::RGBA, FormatFlags(uint8_t(FormatFlags::Normalized) | uint8_t(FormatFlags::sRGB)))),
-        BC2             = uint8_t(makeFormat(FormatTypeFlags::BC2,       FormatCompFlags::RGBA, FormatFlags::Normalized)),
-        BC2_SRGB        = uint8_t(makeFormat(FormatTypeFlags::BC2,       FormatCompFlags::RGBA, FormatFlags(uint8_t(FormatFlags::Normalized) | uint8_t(FormatFlags::sRGB)))),
-        BC3             = uint8_t(makeFormat(FormatTypeFlags::BC3,       FormatCompFlags::RGBA, FormatFlags::Normalized)),
-        BC3_SRGB        = uint8_t(makeFormat(FormatTypeFlags::BC3,       FormatCompFlags::RGBA, FormatFlags(uint8_t(FormatFlags::Normalized) | uint8_t(FormatFlags::sRGB)))),
-        BC4_UNORM       = uint8_t(makeFormat(FormatTypeFlags::BC4_UNORM, FormatCompFlags::R,    FormatFlags::Normalized)),
-        BC4_SNORM       = uint8_t(makeFormat(FormatTypeFlags::BC4_SNORM, FormatCompFlags::R,    FormatFlags::Normalized)),
-        BC5_UNORM       = uint8_t(makeFormat(FormatTypeFlags::BC5_UNORM, FormatCompFlags::RG,   FormatFlags::Normalized)),
-        BC5_SNORM       = uint8_t(makeFormat(FormatTypeFlags::BC5_SNORM, FormatCompFlags::RG,   FormatFlags::Normalized)),
+        BC1             = uint64_t(makeFormat(FormatTypeFlags::BC1,       FormatCompFlags::RGBA, FormatFlags::Normalized)),
+        BC1_SRGB        = uint64_t(makeFormat(FormatTypeFlags::BC1,       FormatCompFlags::RGBA, FormatFlags(uint64_t(FormatFlags::Normalized) | uint64_t(FormatFlags::sRGB)))),
+        BC2             = uint64_t(makeFormat(FormatTypeFlags::BC2,       FormatCompFlags::RGBA, FormatFlags::Normalized)),
+        BC2_SRGB        = uint64_t(makeFormat(FormatTypeFlags::BC2,       FormatCompFlags::RGBA, FormatFlags(uint64_t(FormatFlags::Normalized) | uint64_t(FormatFlags::sRGB)))),
+        BC3             = uint64_t(makeFormat(FormatTypeFlags::BC3,       FormatCompFlags::RGBA, FormatFlags::Normalized)),
+        BC3_SRGB        = uint64_t(makeFormat(FormatTypeFlags::BC3,       FormatCompFlags::RGBA, FormatFlags(uint64_t(FormatFlags::Normalized) | uint64_t(FormatFlags::sRGB)))),
+        BC4_UNORM       = uint64_t(makeFormat(FormatTypeFlags::BC4_UNORM, FormatCompFlags::R,    FormatFlags::Normalized)),
+        BC4_SNORM       = uint64_t(makeFormat(FormatTypeFlags::BC4_SNORM, FormatCompFlags::R,    FormatFlags::Normalized)),
+        BC5_UNORM       = uint64_t(makeFormat(FormatTypeFlags::BC5_UNORM, FormatCompFlags::RG,   FormatFlags::Normalized)),
+        BC5_SNORM       = uint64_t(makeFormat(FormatTypeFlags::BC5_SNORM, FormatCompFlags::RG,   FormatFlags::Normalized)),
 
         // Depth/Stencil
-        D24             = uint8_t(makeFormat(FormatTypeFlags::D24,       FormatCompFlags::R,  FormatFlags::Depth)),
-        D24_S8          = uint8_t(makeFormat(FormatTypeFlags::D24S8,     FormatCompFlags::RG, FormatFlags(uint8_t(FormatFlags::Depth) | uint8_t(FormatFlags::Stencil)))),
-        D32F            = uint8_t(makeFormat(FormatTypeFlags::D32F,      FormatCompFlags::R,  FormatFlags::Depth)),
-        D32F_S8         = uint8_t(makeFormat(FormatTypeFlags::D32FS8,    FormatCompFlags::RG, FormatFlags(uint8_t(FormatFlags::Depth) | uint8_t(FormatFlags::Stencil)))),
+        D24             = uint64_t(makeFormat(FormatTypeFlags::D24,       FormatCompFlags::R,  FormatFlags::Depth)),
+        D24_S8          = uint64_t(makeFormat(FormatTypeFlags::D24S8,     FormatCompFlags::RG, FormatFlags(uint64_t(FormatFlags::Depth) | uint64_t(FormatFlags::Stencil)))),
+        D32F            = uint64_t(makeFormat(FormatTypeFlags::D32F,      FormatCompFlags::R,  FormatFlags::Depth)),
+        D32F_S8         = uint64_t(makeFormat(FormatTypeFlags::D32FS8,    FormatCompFlags::RG, FormatFlags(uint64_t(FormatFlags::Depth) | uint64_t(FormatFlags::Stencil)))),
 
         // Special RT formats for preferred backend support.
-        U8_RGB_RT       = uint8_t(makeFormat(FormatTypeFlags::U8,        FormatCompFlags::RGB,  FormatFlags(uint8_t(FormatFlags::RenderTarget) | uint8_t(FormatFlags::Normalized)))),
-        U8_RGBA_RT      = uint8_t(makeFormat(FormatTypeFlags::U8,        FormatCompFlags::RGBA, FormatFlags(uint8_t(FormatFlags::RenderTarget) | uint8_t(FormatFlags::Normalized)))),
-        U8_RGBA_RT_SRGB = uint8_t(makeFormat(FormatTypeFlags::U8,        FormatCompFlags::RGBA, FormatFlags(uint8_t(FormatFlags::RenderTarget) | uint8_t(FormatFlags::Normalized) | uint8_t(FormatFlags::sRGB)))),
+        U8_RGB_RT       = uint64_t(makeFormat(FormatTypeFlags::U8,        FormatCompFlags::RGB,  FormatFlags(uint64_t(FormatFlags::RenderTarget) | uint64_t(FormatFlags::Normalized)))),
+        U8_RGBA_RT      = uint64_t(makeFormat(FormatTypeFlags::U8,        FormatCompFlags::RGBA, FormatFlags(uint64_t(FormatFlags::RenderTarget) | uint64_t(FormatFlags::Normalized)))),
+        U8_RGBA_RT_SRGB = uint64_t(makeFormat(FormatTypeFlags::U8,        FormatCompFlags::RGBA, FormatFlags(uint64_t(FormatFlags::RenderTarget) | uint64_t(FormatFlags::Normalized) | uint64_t(FormatFlags::sRGB)))),
     };
 
     struct VertexAttributeGenDef {
@@ -278,6 +278,27 @@ vec4 TevOverflow(vec4 a) { return vec4(TevOverflow(a.r), TevOverflow(a.g), TevOv
         QString generateTevStages();
         QString generateTevStagesLastMinuteFixup();
 
+        QString generateAlphaTestCompare(CompareType_t compare, const QString& ref);
+        QString generateAlphaTestOp(AlphaOp_t op);
+        QString generateAlphaTest();
+
+        QString generateFogZCoord();
+        QString generateFogBase();
+        QString generateFogAdj(const QString& base);
+        QString generateFogFunc(const QString& base);
+        QString generateFog();
+
+        QString generateDstAlpha();
+        QString generateAttributeStorageType(GfxFormat& format);
+        bool usesColorChannel(ColorChannelControl& c);
+        bool usesLightChannel(LightChannelControl& c); // TODO should be std::optional
+        bool usesNormalColorChannel(ColorChannelControl& c);
+        bool usesNormal();
+        bool usesTexGenInput(TexGenSrc_t s);
+
+
+
+        constexpr static bool IS_DEPTH_REVERSED = true; // TODO should this be set somewhere? Why is it needed as a variable?
 
         GXMaterialHacks hacks;
 

@@ -903,5 +903,172 @@ QString GXShaderLibrary::GX_Program::generateTevStagesLastMinuteFixup()
         return "\nvec4 t_TevOutput = vec4(" + colorReg + ".rgb, " + alphaReg + ".a);";
 }
 
+QString GXShaderLibrary::GX_Program::generateAlphaTestCompare(CompareType_t compare, const QString& ref)
+{
+    switch (compare) {
+        case CompareType::NEVER:   return "false";
+        case CompareType::LESS:    return "t_PixelOut.a <  " + ref;
+        case CompareType::EQUAL:   return "t_PixelOut.a == " + ref;
+        case CompareType::LEQUAL:  return "t_PixelOut.a <= " + ref;
+        case CompareType::GREATER: return "t_PixelOut.a >  " + ref;
+        case CompareType::NEQUAL:  return "t_PixelOut.a != " + ref;
+        case CompareType::GEQUAL:  return "t_PixelOut.a >= " + ref;
+        case CompareType::ALWAYS:  return "true";
+    }
+}
+
+QString GXShaderLibrary::GX_Program::generateAlphaTestOp(GX::AlphaOp_t op)
+{
+    switch (op) {
+        case AlphaOp::AND:  return "t_AlphaTestA && t_AlphaTestB";
+        case AlphaOp::OR:   return "t_AlphaTestA || t_AlphaTestB";
+        case AlphaOp::XOR:  return "t_AlphaTestA != t_AlphaTestB";
+        case AlphaOp::XNOR: return "t_AlphaTestA == t_AlphaTestB";
+    }
+}
+
+QString GXShaderLibrary::GX_Program::generateAlphaTest()
+{
+    AlphaTest& alphaTest = material.alphaTest;
+
+    // Don't even emit an alpha test if we don't need it, to prevent the driver from trying to
+    // incorrectly set late Z.
+    if (alphaTest.op == AlphaOp::OR && (alphaTest.compareA == CompareType::ALWAYS || alphaTest.compareB == CompareType::ALWAYS))
+        return "";
+
+    QString referenceA = material.hasDynamicAlphaTest ? "u_DynamicAlphaParams.x" : generateFloat(alphaTest.referenceA);
+    QString referenceB = material.hasDynamicAlphaTest ? "u_DynamicAlphaParams.y" : generateFloat(alphaTest.referenceB);
+
+    return R"(
+    bool t_AlphaTestA = )" + generateAlphaTestCompare(alphaTest.compareA, referenceA) + R"(;
+    bool t_AlphaTestB = )" + generateAlphaTestCompare(alphaTest.compareB, referenceB) + R"(;
+    if (!()" + generateAlphaTestOp(alphaTest.op) + R"())
+        discard;)";
+}
+
+QString GXShaderLibrary::GX_Program::generateFogZCoord()
+{
+    if (IS_DEPTH_REVERSED)
+        return "(1.0 - gl_FragCoord.z)";
+    else
+        return "gl_FragCoord.z";
+}
+
+QString GXShaderLibrary::GX_Program::generateFogBase()
+{
+    // We allow switching between orthographic & perspective at runtime for the benefit of camera controls.
+    // const ropInfo = this.material.ropInfo;
+    // const proj = !!(ropInfo.fogType >>> 3);
+    // const isProjection = (proj === 0);
+    QString isProjection = "(u_FogBlock.Param.y != 0.0)";
+
+    QString A = "u_FogBlock.Param.x";
+    QString B = "u_FogBlock.Param.y";
+    QString z = generateFogZCoord();
+
+    return "(" + isProjection + ") ? (" + A + " / ( " + B + " - " + z + ")) : (" + A + " * " + z + ")";
+}
+
+QString GXShaderLibrary::GX_Program::generateFogAdj(const QString& base)
+{
+    if (material.ropInfo.fogAdjEnabled) {
+        // TODO(jstpierre): Fog adj
+        return "";
+    } else {
+        return "";
+    }
+}
+
+QString GXShaderLibrary::GX_Program::generateFogFunc(const QString& base)
+{
+    FogType_t fogType = FogType_t(material.ropInfo.fogType & 0x07);
+    if (fogType == FogType::PERSP_LIN) {
+        return "";
+    } else {
+        // TODO(jstpierre): Other fog types.
+        return "";
+    }
+}
+
+QString GXShaderLibrary::GX_Program::generateFog()
+{
+    RopInfo& ropInfo = material.ropInfo;
+    if (ropInfo.fogType == FogType::NONE)
+        return "";
+
+    QString C = "u_FogBlock.Param.z";
+
+    return "float t_FogBase = " + generateFogBase() + ";\n" +
+generateFogAdj("t_FogBase") +
+"\n\tfloat t_Fog = saturate(t_FogBase - " + C + ");\n" +
+generateFogFunc("t_Fog") +
+"\n\tt_PixelOut.rgb = mix(t_PixelOut.rgb, u_FogBlock.Color.rgb, t_Fog);\n";
+}
+
+QString GXShaderLibrary::GX_Program::generateDstAlpha()
+{
+    RopInfo& ropInfo = material.ropInfo;
+    if (ropInfo.dstAlpha == 0x00) // TODO optional undefined
+        return "";
+
+    return "\n\tt_PixelOut.a = " + generateFloat(ropInfo.dstAlpha) + ";\n";
+}
+
+QString GXShaderLibrary::GX_Program::generateAttributeStorageType(GfxFormat& format)
+{
+    switch (format) {
+        case GfxFormat::F32_R:    return "float";
+        case GfxFormat::F32_RG:   return "vec2";
+        case GfxFormat::F32_RGB:  return "vec3";
+        case GfxFormat::F32_RGBA: return "vec4";
+        default: throw "whoops";
+    }
+}
+
+bool GXShaderLibrary::GX_Program::usesColorChannel(ColorChannelControl& c)
+{
+    return c.matColorSource == ColorSrc::VTX || c.ambColorSource == ColorSrc::VTX;
+}
+
+bool GXShaderLibrary::GX_Program::usesLightChannel(GX::LightChannelControl& c)
+{
+    //if (c == undefined)
+    //    return false;
+    return usesColorChannel(c.colorChannel) || usesColorChannel(c.alphaChannel);
+}
+
+bool GXShaderLibrary::GX_Program::usesNormalColorChannel(ColorChannelControl& c)
+{
+    if (!c.lightingEnabled || c.litMask == 0)
+        return false;
+    if (c.diffuseFunction != DiffuseFunction::NONE)
+        return true;
+    if (c.attenuationFunction == AttenuationFunction::SPEC)
+        return true;
+    return false;
+}
+
+bool GXShaderLibrary::GX_Program::usesNormal()
+{
+    for(LightChannelControl& c : material.lightChannels)
+    {
+        if(usesNormalColorChannel(c.colorChannel) || usesNormalColorChannel(c.alphaChannel))
+            return true;
+    }
+
+    return false;
+}
+
+bool GXShaderLibrary::GX_Program::usesTexGenInput(GX::TexGenSrc_t s)
+{
+    for(TexGen& g : material.texGens)
+    {
+        if(g.source == s)
+            return true;
+    }
+
+    return false;
+}
+
 
 // TODO continue at https://github.com/magcius/noclip.website/blob/master/src/gx/gx_material.ts#L1165
