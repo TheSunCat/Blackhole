@@ -18,6 +18,8 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
 
     m_renderer = m_ui->openGLWidget;
 
+    std::vector<std::future<void>> futures;
+
     for(const QString& zoneName : m_galaxy.m_zoneList)
     {
         // load the zone
@@ -30,8 +32,9 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
             for(BaseObject* object : objectList) {
                 // TODO do I need maxUniqueID?
                 m_objects.push_back(object);
+                futures.push_back(std::async(std::launch::async, &GalaxyRenderer::addObject, m_renderer, object));
 
-                std::cout << object->m_name.toStdString() << std::endl;
+                std::cout << "Loaded object: " << object->m_name.toStdString() << std::endl;
             }
         }
 
@@ -80,12 +83,7 @@ GalaxyEditorForm::GalaxyEditorForm(QWidget *parent, const QString& galaxyName) :
         }
     }
 
-    std::vector<std::future<void>> futures;
 
-    for(BaseObject* obj : m_objects)
-    {
-        futures.push_back(std::async(std::launch::async, &GalaxyRenderer::addObject, m_renderer, obj));
-    }
 }
 
 GalaxyEditorForm::~GalaxyEditorForm()

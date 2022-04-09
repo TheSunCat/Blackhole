@@ -21,7 +21,7 @@ BmdFile::BmdFile(BaseFile* inRarcFile) : file(inRarcFile)
 
     for(uint32_t i = 0; i < numSections; i++)
     {
-        QString section= file->readString(4, "ASCII");
+        QString section= file->readString(4, "ASCII"); // TODO redo all these with noclip code
         if(section == "INF1")
             readINF1();
         if(section == "VTX1")
@@ -34,7 +34,7 @@ BmdFile::BmdFile(BaseFile* inRarcFile) : file(inRarcFile)
             readJNT1();
         if(section == "SHP1")
             readSHP1();
-        if(section == "MAT3")
+        if(section == "MAT3") // stop rampage here please
             readMAT3();
         if(section == "MDL3")
             readMDL3();
@@ -48,59 +48,14 @@ void BmdFile::readINF1()
     uint32_t sectionStart = file->position() - 0x4;
     uint32_t sectionSize = file->readInt();
 
-    m_sceneGraph.clear();
+    J3DLoadFlags loadFlags = J3DLoadFlags(file->readShort());
+    file->skip(2);
+    uint32_t mtxGroupCount = file->readInt();
+    uint32_t vertexCount = file->readInt();
+    uint32_t hierarchyOffset = file->readInt();
+    VectorView<uint8_t> hierarchyData = file->slice(sectionStart + hierarchyOffset, sectionStart + sectionSize);
 
-    std::stack<uint16_t> materialStack;
-    std::stack<int16_t> nodeStack;
-
-    materialStack.push(0xFFFF);
-    nodeStack.push(-1);
-
-    file->skip(8);
-    m_vertexCount = file->readInt();
-
-    uint32_t dataStart = file->readInt();
-    file->skip(dataStart - 0x18);
-
-    uint16_t curType = 0;
-    while((curType = file->readShort()) != 0)
-    {
-        uint16_t arg = file->readShort();
-
-        switch(curType)
-        {
-            case 0x01:
-            {
-                materialStack.push(materialStack.top());
-                nodeStack.push(m_sceneGraph.size() - 1);
-                break;
-            }
-            case 0x02:
-            {
-                materialStack.pop();
-                nodeStack.pop();
-                break;
-            }
-            case 0x11:
-            {
-                materialStack.pop();
-                materialStack.push(arg);
-                break;
-            }
-            case 0x10:
-            case 0x12:
-            {
-                m_sceneGraph.push_back({
-                    materialStack.top(),
-                    nodeStack.top(),
-                    curType != 0x12,
-                    arg
-                });
-
-                break;
-            }
-        }
-    }
+    inf1 = INF1{ hierarchyData, loadFlags };
 
     file->position(sectionStart + sectionSize);
 }
@@ -110,165 +65,71 @@ void BmdFile::readVTX1()
     uint32_t sectionStart = file->position() - 0x4;
     uint32_t sectionSize = file->readInt();
 
-    m_arrayMask = 0;
+    uint32_t formatOffset = file->readInt();
+    uint32_t dataOffsetLookupTable = 0x0C;
 
-    m_colors[0].clear(); m_colors[1].clear();
-    for(int i = 0; i < m_texCoords.size(); i++)
-        m_texCoords[i].clear();
+    // Data tables are stored in this order. Assumed to be hardcoded in a
+    // struct somewhere inside JSystem.
+    const std::array<GX::Attr_t, 13> dataTables = {
+        GX::Attr::POS,
+        GX::Attr::NRM,
+        GX::Attr::NRM, // NBT
+        GX::Attr::CLR0,
+        GX::Attr::CLR1,
+        GX::Attr::TEX0,
+        GX::Attr::TEX1,
+        GX::Attr::TEX2,
+        GX::Attr::TEX3,
+        GX::Attr::TEX4,
+        GX::Attr::TEX5,
+        GX::Attr::TEX6,
+        GX::Attr::TEX7,
+    };
 
-    std::vector<uint32_t> arrayOffsets;
+    uint32_t offset = formatOffset;
+    std::unordered_map<GX::Attr_t, GX::VertexArray> vertexArrays;
+    while (true) {
+        file->position(offset);
+        GX::Attr_t vtxAttrib = GX::Attr_t(file->readInt());
+        if (vtxAttrib == GX::Attr::NUL)
+            break;
 
-    uint32_t arrayDefOffset = file->readInt();
-    for(int i = 0; i < 13; i++)
-    {
-        file->position(sectionStart + 0xC + (i * 0x4));
-        uint32_t dataOffset = file->readInt();
+        GX::CompCnt_t compCnt = GX::CompCnt_t(file->readInt());
+        GX::CompType_t compType = GX::CompType_t(file->readInt());
+        uint8_t compShift = file->readByte();
+        offset += 0x10;
 
-        if(dataOffset == 0)
+        uint32_t formatIdx = indexOf(dataTables, vtxAttrib);
+        if (formatIdx < 0)
             continue;
 
-        arrayOffsets.push_back(dataOffset);
-    }
+        // Each attrib in the VTX1 chunk also has a corresponding data chunk containing
+        // the data for that attribute, in the format stored above.
 
-    for(int i = 0; i < arrayOffsets.size(); i++)
-    {
-        file->position(sectionStart + arrayDefOffset + (i * 0x10));
+        // BMD doesn't tell us how big each data chunk is, but we need to know to figure
+        // out how much data to upload. We assume the data offset lookup table is sorted
+        // in order, and can figure it out by finding the next offset above us.
+        uint32_t dataOffsetLookupTableEntry = dataOffsetLookupTable + formatIdx*0x04;
+        uint32_t dataOffsetLookupTableEnd = dataOffsetLookupTable + dataTables.size()*0x04;
 
-        uint32_t arrayType = file->readInt();
-        uint32_t compSize = file->readInt();
-        uint32_t dataType = file->readInt();
-        uint8_t fixedPoint = file->readByte() & 0xFF; // TODO do we need this & 0xFF?
+        file->position(dataOffsetLookupTableEntry);
+        uint32_t dataStart = file->readInt();
 
-        // Whitehole comment:
-        // apparently, arrays may contain more elements than specified in the INF1 section
-        // so we have to rely on bmdview2's way to know the array's exact size
-        uint32_t arraySize = 0;
-        if(i == arrayOffsets.size() - 1)
-            arraySize = sectionSize - arrayOffsets[i];
-        else
-            arraySize = arrayOffsets[i + 1] - arrayOffsets[i];
-
-        if(arrayType == 11 || arrayType == 12)
-        {
-            assert(!((dataType < 3) ^ (compSize == 0))); // Bmd: component count mismatch in color array
-
-            switch(dataType)
-            {
-                case 1:
-                case 2:
-                case 5:
-                    arraySize /= 4;
-                    break;
-                default:
-                    assert(false); // Bmd: unsupported color DataType
-            }
-        }
-        else
-        {
-            switch(dataType)
-            {
-                case 3:
-                {
-                    arraySize /= 2;
-                    break;
-                }
-                case 4:
-                {
-                    arraySize /= 4;
-                    break;
-                }
-                default:
-                    assert(false); // Bmd: unsupported DataType
-            }
+        // find dataEnd
+        uint32_t dataEnd = sectionSize; // TODO is sectionSize the right default value?
+        file->position(dataOffsetLookupTableEntry + 0x04);
+        while (file->position() < dataOffsetLookupTableEnd) {
+            uint32_t dataOffset = file->readInt();
+            if (dataOffset != 0)
+                dataEnd =  dataOffset;
         }
 
-        file->position(sectionStart + arrayOffsets[i]);
+        uint32_t dataOffset = dataStart;
+        uint32_t dataSize = dataEnd - dataStart;
+        VectorView<uint8_t> vtxDataBuffer(file->getContents().begin() + dataOffset, file->getContents().begin() + dataOffset + dataSize);
+        GX::VertexArray vertexArray = { vtxAttrib, compType, compCnt, compShift, vtxDataBuffer, dataOffset, dataSize };
 
-        m_arrayMask |= 0b1 << arrayType;
-        switch(arrayType)
-        {
-            case 9:
-            {
-                if(compSize == 0)
-                {
-                    m_positions.reserve(arraySize / 2);
-                    for(int j = 0; j < arraySize / 2; j++)
-                        m_positions[j] = glm::vec3(readArrayValue(dataType, fixedPoint),
-                                                   readArrayValue(dataType, fixedPoint), 0);
-                }
-                else if(compSize == 1)
-                {
-                    m_positions.reserve(arraySize / 3);
-                    for(int j = 0; j < arraySize / 3; j++)
-                        m_positions[j] = glm::vec3(readArrayValue(dataType, fixedPoint),
-                                                   readArrayValue(dataType, fixedPoint),
-                                                   readArrayValue(dataType, fixedPoint));
-
-                }
-                else
-                {
-                    assert(false); // Bmd: unsupported position CompSize
-                }
-
-                break;
-            }
-            case 10:
-            {
-                if(compSize == 0)
-                {
-                    m_normals.reserve(arraySize / 3);
-                    for(int j = 0; j < arraySize / 3; j++)
-                        m_normals[j] = glm::vec3(readArrayValue(dataType, fixedPoint),
-                                                 readArrayValue(dataType, fixedPoint),
-                                                 readArrayValue(dataType, fixedPoint));
-                }
-                else
-                {
-                    assert(false); // Bmd: unsupported normal CompSize
-                }
-
-                break;
-            }
-            case 11:
-            case 12:
-            {
-                uint32_t cid = arrayType - 11;
-                m_colors[cid] = std::vector<QColor>(arraySize);
-                for(int j = 0; j < arraySize; j++)
-                    m_colors[cid][j] = readColorValue(dataType);
-
-                break;
-            }
-            case 13:
-            case 14:
-            case 15:
-            case 16:
-            case 17:
-            case 18:
-            case 19:
-            case 20:
-            {
-                uint32_t tid = arrayType - 13;
-                if(compSize == 0)
-                {
-                    m_texCoords[tid].reserve(arraySize);
-                    for(int j = 0; j < arraySize; j++)
-                        m_texCoords[tid][j] = glm::vec2(readArrayValue(dataType, fixedPoint), 0);
-                }
-                else if(compSize == 1)
-                {
-                    m_texCoords[tid].reserve(arraySize / 2);
-                    for(int j = 0; j < arraySize / 2; j++)
-                        m_texCoords[tid][j] = glm::vec2(readArrayValue(dataType, fixedPoint),
-                                                        readArrayValue(dataType, fixedPoint));
-                }
-                else
-                {
-                    assert(false); // Bmd: unsupported texcoord CompSize
-                }
-                break;
-            }
-        }
+        vertexArrays.insert(std::make_pair(vtxAttrib, vertexArray));
     }
 
     file->position(sectionStart + sectionSize);

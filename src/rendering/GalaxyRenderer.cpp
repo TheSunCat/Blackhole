@@ -9,7 +9,7 @@
 GalaxyRenderer::GalaxyRenderer(QWidget *parent) : QOpenGLWidget(parent)
 {
     QSurfaceFormat fmt = format();
-    fmt.setSamples(16); // multisampling set to 16
+    fmt.setSamples(16); // TODO:Zyphro setting for multisampling
     fmt.setSwapInterval(1);
     setFormat(fmt);
 
@@ -31,13 +31,12 @@ void GalaxyRenderer::addObject(BaseObject* obj)
     m_objects.push_back(std::move(r));
 }
 
-
-
 void GalaxyRenderer::initializeGL()
 {
-    initializeOpenGLFunctions();
+    gl = new QOpenGLFunctions_3_3_Core;
+    gl->initializeOpenGLFunctions();
 
-    glEnable(GL_DEPTH_TEST);
+    gl->glEnable(GL_DEPTH_TEST);
 
     // make shaders
     m_objectShader.addCacheableShaderFromSourceCode(QOpenGLShader::Vertex,
@@ -63,41 +62,10 @@ void GalaxyRenderer::initializeGL()
 
     m_objectShader.link();
 
-    // set up cube
-    float vertices[] = {
-        // positions          // texture coords
-         0.5f,  0.5f, 0.0f,   1.0f, 1.0f, // top right
-         0.5f, -0.5f, 0.0f,   1.0f, 0.0f, // bottom right
-        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, // bottom left
-        -0.5f,  0.5f, 0.0f,   0.0f, 1.0f  // top left
-    };
-    unsigned int indices[] = {
-        0, 1, 3, // first triangle
-        1, 2, 3  // second triangle
-    };
-
-    unsigned int VBO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // vertex positions
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-
-    // texture coordinates
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    //for(auto& obj : m_objects)
+    {
+        m_objects[0].initGL();
+    }
 }
 
 void GalaxyRenderer::paintGL()
@@ -105,28 +73,30 @@ void GalaxyRenderer::paintGL()
     m_camera.update();
 
 
-    glClearColor(0.f, 0.3f, 0.2f, 1.0f);
+    gl->glClearColor(0.f, 0.3f, 0.2f, 1.0f);
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     m_objectShader.bind();
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    glUniformMatrix4fv(glGetUniformLocation(m_objectShader.programId(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+    gl->glUniformMatrix4fv(gl->glGetUniformLocation(m_objectShader.programId(), "model"), 1, GL_FALSE, glm::value_ptr(model));
 
     glm::mat4 projection = m_camera.projection();
-    glUniformMatrix4fv(glGetUniformLocation(m_objectShader.programId(), "projection"), 1, GL_FALSE, &projection[0][0]);
+    gl->glUniformMatrix4fv(gl->glGetUniformLocation(m_objectShader.programId(), "projection"), 1, GL_FALSE, &projection[0][0]);
     glm::mat4 view = m_camera.view();
-    glUniformMatrix4fv(glGetUniformLocation(m_objectShader.programId(), "view"), 1, GL_FALSE, &view[0][0]);
+    gl->glUniformMatrix4fv(gl->glGetUniformLocation(m_objectShader.programId(), "view"), 1, GL_FALSE, &view[0][0]);
 
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    //for(auto& obj : m_objects)
+    {
+        m_objects[0].draw();
+    }
 }
 
 void GalaxyRenderer::resizeGL(int w, int h)
 {
-    glViewport(0, 0, w, h);
+    gl->glViewport(0, 0, w, h);
 
     m_camera.setDimensions(width(), height());
 }
@@ -205,3 +175,4 @@ void GalaxyRenderer::leaveEvent(QEvent* event)
 
 }
 
+QOpenGLFunctions_3_3_Core *GalaxyRenderer::gl = nullptr;

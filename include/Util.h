@@ -10,11 +10,12 @@
 
 #include "ui/Blackhole.h"
 
+// workaround for bad enums in C++
 #define BLACKHOLE_ENUM_START(name) namespace name { enum name : uint8_t
 #define BLACKHOLE_ENUM_END(name) \
 }; typedef name::name name##_t;
 
-// TODO this looks horrid. is there a better way?
+
 template<class T>
 class Iterator
 {
@@ -39,6 +40,34 @@ public:
         return *m_it;
     }
 };
+
+
+template<typename T>
+class VectorView
+{
+    typedef typename std::vector<T>::const_iterator Iterator;
+
+    Iterator* m_begin = nullptr;
+    Iterator* m_end = nullptr;
+public:
+    VectorView(Iterator* begin, Iterator* end) : m_begin(begin), m_end(end) {}
+    Iterator begin() const { return m_begin; }
+    Iterator end()   const { return m_end;   }
+
+    typename std::iterator_traits<Iterator>::reference operator[](std::size_t index) { return m_begin[index]; };
+};
+
+template<typename T, std::size_t H>
+uint32_t indexOf(std::array<T, H> array, T element)
+{
+    for(uint32_t i = 0; i < array.size(); i++)
+    {
+        if(array[i] == element)
+            return i;
+    }
+
+    return -1;
+}
 
 namespace std {
 

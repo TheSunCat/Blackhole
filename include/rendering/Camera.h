@@ -53,7 +53,7 @@ private:
     glm::vec2 m_pixelFactor = glm::vec3(1);
 
     float m_znear = 0.01f;
-    float m_zfar = 1000.0f;
+    float m_zfar = 10000000.0f;
 
     bool m_updateNeeded = true;
     glm::mat4 m_viewMatrix;

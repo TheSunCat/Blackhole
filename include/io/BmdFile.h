@@ -12,69 +12,26 @@
 
 class BmdFile
 {
-    struct SceneGraphNode
-    {
-        uint16_t materialID = -1;
+    // INF1
+    enum J3DLoadFlags {
+        // Scaling rule
+        ScalingRule_Basic = 0x00000000,
+        ScalingRule_XSI   = 0x00000001,
+        ScalingRule_Maya  = 0x00000002,
+        ScalingRule_Mask  = 0x0000000F,
 
-        int16_t parentIndex;
-        uint32_t nodeType; // 0: shape, 1: joint
-        uint16_t nodeID;
+        // TODO(jstpierre): Document the other bits.
     };
 
-    struct MultiMatrix
+    struct INF1
     {
-        uint32_t count;
-        std::vector<uint16_t> indices;
-        std::vector<glm::mat4> matrices;
-        std::vector<float> weights;
+        VectorView<uint8_t> hierarchyData;
+        J3DLoadFlags loadFlags;
     };
 
-    struct MatrixType
-    {
-        bool weighted;
-        uint16_t index;
-    };
-
-    struct Joint
-    {
-        uint16_t unk1;
-        uint8_t unk2;
-
-        glm::vec3 scale, rotation, translation;
-        glm::mat4 matrix;
-        glm::mat4 finalMatrix; // matrix with parents' transforms applied
-    };
-
-    struct Batch
-    {
-        struct Packet
-        {
-            struct Primitive
-            {
-                uint32_t numIndices;
-                uint32_t primitiveType;
-
-                uint32_t arrayMask;
-                std::vector<uint32_t> posMatrixIndices;
-                std::vector<uint32_t> positionIndices;
-                std::vector<uint32_t> normalIndices;
-                std::array<std::vector<uint32_t>, 2> colorIndices;
-                std::array<std::vector<uint32_t>, 8> texcoordIndices;
-            };
 
 
-            std::vector<Primitive> primitives;
-            std::vector<uint16_t> matrixTable;
-        };
-
-
-        uint8_t matrixType;
-
-        std::vector<Packet> packets;
-
-        float unk;
-    };
-
+    // MAT3
     enum TexMatrixProjection {
         MTX3x4 = 0,
         MTX2x4 = 1,
@@ -113,7 +70,8 @@ class BmdFile
         GX::FogBlock fogBlock;
     };
 
-    struct Sampler {
+    struct Sampler
+    {
         uint32_t index;
 
         QString name;
@@ -169,27 +127,7 @@ public:
     void close();
 
     // INF1
-    uint32_t m_vertexCount;
-    std::vector<SceneGraphNode> m_sceneGraph;
-
-    // VTX1
-    uint32_t m_arrayMask;
-    std::vector<glm::vec3> m_positions;
-    std::vector<glm::vec3> m_normals;
-    std::array<std::vector<QColor>, 2> m_colors;
-    std::array<std::vector<glm::vec2>, 8> m_texCoords;
-
-    // EVP1
-    std::vector<MultiMatrix> m_multiMatrices;
-
-    // DRW1
-    std::vector<MatrixType> m_matrixTypes;
-
-    // JNT1
-    std::vector<Joint> m_joints;
-
-    // SHP1
-    std::vector<Batch> m_batches;
+    INF1 inf1;
 
     // MAT3
     std::vector<Material> m_materials;

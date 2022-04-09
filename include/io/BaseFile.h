@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Constants.h"
+#include "Util.h"
 
 #include <vector>
 #include <QString>
@@ -47,4 +48,5 @@ public:
 
     virtual const std::vector<uint8_t>& getContents() const;
     virtual void setContents(const std::vector<uint8_t>& bytes);
+    virtual VectorView<uint8_t> slice(uint32_t start, uint32_t end);
 };

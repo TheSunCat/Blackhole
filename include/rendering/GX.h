@@ -750,4 +750,78 @@ bool autoOptimizeMaterialHasPostTexMtxBlock(Material& mat);
 bool autoOptimizeMaterialHasLightsBlock(Material& mat);
 bool autoOptimizeMaterialHasFogBlock(Material& mat);
 
+BLACKHOLE_ENUM_START(Attr) {
+    PNMTXIDX = 0,
+    TEX0MTXIDX = 1,
+    TEX1MTXIDX = 2,
+    TEX2MTXIDX = 3,
+    TEX3MTXIDX = 4,
+    TEX4MTXIDX = 5,
+    TEX5MTXIDX = 6,
+    TEX6MTXIDX = 7,
+    TEX7MTXIDX = 8,
+    POS = 9,
+    NRM = 10,
+    CLR0 = 11,
+    CLR1 = 12,
+    TEX0 = 13,
+    TEX1 = 14,
+    TEX2 = 15,
+    TEX3 = 16,
+    TEX4 = 17,
+    TEX5 = 18,
+    TEX6 = 19,
+    TEX7 = 20,
+    MAX = TEX7,
+    // NOTE: NBT is a fake API entry-point for GX! It's listed here in case some tools
+    // use it as serialization, but you should always switch to NRM in your high-level code.
+    _NBT = 25,
+    NUL = 0xFF
+};
+BLACKHOLE_ENUM_END(Attr)
+
+BLACKHOLE_ENUM_START(CompType) {
+    U8 = 0,
+    S8 = 1,
+    U16 = 2,
+    S16 = 3,
+    F32 = 4,
+
+    RGB565 = 0,
+    RGB8 = 1,
+    RGBX8 = 2,
+    RGBA4 = 3,
+    RGBA6 = 4,
+    RGBA8 = 5,
+};
+BLACKHOLE_ENUM_END(CompType)
+
+BLACKHOLE_ENUM_START(CompCnt) {
+    // Position
+    POS_XY = 0,
+    POS_XYZ = 1,
+    // Normal
+    NRM_XYZ = 0,
+    NRM_NBT = 1,
+    NRM_NBT3 = 2,
+    // Color
+    CLR_RGB = 0,
+    CLR_RGBA = 1,
+    // TexCoord
+    TEX_S = 0,
+    TEX_ST = 1,
+};
+BLACKHOLE_ENUM_END(CompCnt)
+
+struct VertexArray
+{
+    Attr_t vtxAttrib;
+    CompType_t compType;
+    CompCnt_t compCnt;
+    uint8_t compShift;
+    VectorView<uint8_t> buffer;
+    uint32_t dataOffset;
+    uint32_t dataSize;
+};
+
 }; // end namespace GX

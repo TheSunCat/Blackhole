@@ -16,7 +16,7 @@
 #include "rendering/Camera.h"
 #include "rendering/ObjectRenderer.h"
 
-class GalaxyRenderer : public QOpenGLWidget, protected QOpenGLFunctions_3_3_Core
+class GalaxyRenderer : public QOpenGLWidget
 {
     std::jthread m_updateThread = std::jthread([this] (std::stop_token itoken) {
         using namespace std::chrono_literals;
@@ -47,6 +47,7 @@ public:
     // thread-safe
     void addObject(BaseObject* obj);
 
+    static QOpenGLFunctions_3_3_Core* gl;
 protected:
     void initializeGL() override;
     void resizeGL(int w, int h) override;

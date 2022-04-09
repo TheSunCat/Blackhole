@@ -22,6 +22,12 @@ class ObjectRenderer
     QString m_modelName;
 
     void decodeTexture(GX::BTI_Texture& tex);
+
+    unsigned int VAO;
+    uint32_t nTris;
 public:
     ObjectRenderer(BaseObject* obj);
+
+    void initGL();
+    void draw();
 };
