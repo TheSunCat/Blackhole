@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
 
+
+# TODO include CMake with vcpkg. or conan?
+
 #include(FetchContent)
 #FetchContent_Declare(
   #vcpkg

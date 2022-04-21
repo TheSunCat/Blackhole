@@ -24,7 +24,7 @@ Zone::Zone(Galaxy* parent, const QString& name) : m_galaxy(parent), m_zoneName(n
         m_zoneFileName = "StageData/" + m_zoneName + '/' + m_zoneName + "Map.arc";
 
 
-    m_map = RarcFile(absolutePath(m_zoneFileName));
+    m_map = RarcFile(Util::absolutePath(m_zoneFileName));
     loadObjects("Placement", "StageObjInfo");
     loadObjects("MapParts", "MapPartsInfo");
     loadObjects("Placement", "ObjInfo");

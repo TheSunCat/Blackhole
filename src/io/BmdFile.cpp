@@ -6,10 +6,6 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
-#ifndef M_PI
-#define M_PI (3.14159265358979323846)
-#endif
-
 BmdFile::BmdFile(BaseFile* inRarcFile) : file(inRarcFile)
 {
     file->setBigEndian(true);
@@ -53,7 +49,7 @@ void BmdFile::readINF1()
     uint32_t mtxGroupCount = file->readInt();
     uint32_t vertexCount = file->readInt();
     uint32_t hierarchyOffset = file->readInt();
-    VectorView<uint8_t> hierarchyData = file->slice(sectionStart + hierarchyOffset, sectionStart + sectionSize);
+    std::span<uint8_t> hierarchyData = file->slice(sectionStart + hierarchyOffset, sectionStart + sectionSize);
 
     inf1 = INF1{ hierarchyData, loadFlags };
 
@@ -126,11 +122,13 @@ void BmdFile::readVTX1()
 
         uint32_t dataOffset = dataStart;
         uint32_t dataSize = dataEnd - dataStart;
-        VectorView<uint8_t> vtxDataBuffer(file->getContents().begin() + dataOffset, file->getContents().begin() + dataOffset + dataSize);
+        std::span<uint8_t> vtxDataBuffer = file->slice(dataOffset, dataOffset + dataSize);
         GX::VertexArray vertexArray = { vtxAttrib, compType, compCnt, compShift, vtxDataBuffer, dataOffset, dataSize };
 
         vertexArrays.insert(std::make_pair(vtxAttrib, vertexArray));
     }
+
+    vtx1 = { vertexArrays };
 
     file->position(sectionStart + sectionSize);
 }
@@ -140,64 +138,67 @@ void BmdFile::readEVP1()
     uint32_t sectionStart = file->position() - 4;
     uint32_t sectionSize = file->readInt();
 
-    uint16_t count = file->readShort();
+    uint16_t envelopeTableCount = file->readShort();
     file->skip(0x2);
 
-    m_multiMatrices.clear();
-    m_multiMatrices.reserve(count);
+    uint32_t weightedBoneCountTableOffset = file->readInt();
+    uint32_t weightedBoneIndexTableOffset = file->readInt();
+    uint32_t weightedBoneWeightTableOffset = file->readInt();
+    uint32_t inverseBindPoseTableOffset = file->readInt();
 
-    uint32_t sizesOffset = file->readInt();
-    uint32_t indicesOffset = file->readInt();
-    uint32_t weightsOffset = file->readInt();
-    uint32_t matricesOffset = file->readInt();
-
-    uint32_t position1 = 0, position2 = 0;
-    for(uint32_t i = 0; i < count; i++)
+    uint16_t weightedBoneId = 0;
+    uint16_t maxBoneIndex = 0; // TODO this was -1 but uint?
+    std::vector<Envelope> envelopes;
+    for(int i = 0; i < envelopeTableCount; i++)
     {
-        file->position(sectionStart + sizesOffset + i);
+        file->position(sectionStart + weightedBoneCountTableOffset + i);
+        uint8_t numWeightedBones = file->readByte();
 
-        uint8_t subCount = file->readByte();
+        std::vector<WeightedBone> weightedBones;
 
-        MultiMatrix multiMatrix{
-            subCount
-        };
-        multiMatrix.indices.reserve(subCount);
-        multiMatrix.matrices.reserve(subCount);
-        multiMatrix.weights.reserve(subCount);
-
-        for(uint32_t j = 0; j < subCount; j++)
+        for(int j = 0; j < numWeightedBones; j++)
         {
-            file->position(sectionStart + indicesOffset + position1);
-            multiMatrix.indices[j] = file->readShort();
-            position1 += 2;
+            file->position(sectionStart + weightedBoneCountTableOffset + weightedBoneId * 0x02);
+            uint16_t index = file->readShort();
 
-            file->position(sectionStart + weightsOffset + position2);
-            multiMatrix.weights[j] = file->readFloat();
-            position2 += 4;
+            file->position(sectionStart + weightedBoneWeightTableOffset + weightedBoneId * 0x04);
+            float weight = file->readFloat();
 
-            file->position(sectionStart + matricesOffset + (multiMatrix.indices[j] * 0x30));
-
-            // GLM is column-major
-            multiMatrix.matrices[j][0][0] = file->readFloat();
-            multiMatrix.matrices[j][0][1] = file->readFloat();
-            multiMatrix.matrices[j][0][2] = file->readFloat();
-            multiMatrix.matrices[j][0][3] = file->readFloat();
-            multiMatrix.matrices[j][1][0] = file->readFloat();
-            multiMatrix.matrices[j][1][1] = file->readFloat();
-            multiMatrix.matrices[j][1][2] = file->readFloat();
-            multiMatrix.matrices[j][1][3] = file->readFloat();
-            multiMatrix.matrices[j][2][0] = file->readFloat();
-            multiMatrix.matrices[j][2][1] = file->readFloat();
-            multiMatrix.matrices[j][2][2] = file->readFloat();
-            multiMatrix.matrices[j][2][3] = file->readFloat();
-            multiMatrix.matrices[j][3][0] = file->readFloat();
-            multiMatrix.matrices[j][3][1] = file->readFloat();
-            multiMatrix.matrices[j][3][2] = file->readFloat();
-            multiMatrix.matrices[j][3][3] = file->readFloat();
+            weightedBones.push_back({weight, index});
+            maxBoneIndex = std::max(maxBoneIndex, index);
+            weightedBoneId++;
         }
 
-        m_multiMatrices.push_back(multiMatrix);
+        envelopes.push_back({weightedBones});
     }
+
+    std::vector<glm::mat4> inverseBinds;
+    for(int i = 0; i < maxBoneIndex + 1; i++)
+    {
+        file->position(sectionStart + inverseBindPoseTableOffset + (i * 0x30));
+
+        float m00 = file->readFloat();
+        float m10 = file->readFloat();
+        float m20 = file->readFloat();
+        float m30 = file->readFloat();
+        float m01 = file->readFloat();
+        float m11 = file->readFloat();
+        float m21 = file->readFloat();
+        float m31 = file->readFloat();
+        float m02 = file->readFloat();
+        float m12 = file->readFloat();
+        float m22 = file->readFloat();
+        float m32 = file->readFloat();
+
+        inverseBinds.push_back(glm::mat4( // TODO is this ctor accurate?
+            m00, m01, m02, 0,
+            m10, m11, m12, 0,
+            m20, m21, m22, 0,
+            m30, m31, m32, 1
+        ));
+    }
+
+    evp1 = { envelopes, inverseBinds };
 
     file->position(sectionStart + sectionSize);
 }
@@ -207,23 +208,25 @@ void BmdFile::readDRW1()
     uint32_t sectionStart = file->position() - 4;
     uint32_t sectionSize = file->readInt();
 
-    uint16_t count = file->readShort();
+    uint16_t drawMatrixCount = file->readShort();
     file->skip(0x2);
 
-    m_matrixTypes.clear();
-    m_matrixTypes.reserve(count);
+    uint32_t drawMatrixTypeTableOffset = file->readInt();
+    uint32_t dataArrayOffset = file->readInt();
 
-    uint32_t weightedsOffset = file->readInt();
-    uint32_t indicesOffset = file->readInt();
-
-    for(uint32_t i = 0; i < count; i++)
+    std::vector<DRW1Matrix> matrixDefinitions;
+    for(int i = 0; i < drawMatrixCount; i++)
     {
-        file->position(sectionStart + weightedsOffset + i);
-        m_matrixTypes[i].weighted = (file->readByte() != 0);
+        file->position(sectionStart + drawMatrixTypeTableOffset + i);
+        DRW1MatrixKind kind = DRW1MatrixKind(file->readByte());
 
-        file->position(sectionStart + indicesOffset + (i * 2));
-        m_matrixTypes[i].index = file->readShort();
+        file->position(sectionStart + dataArrayOffset + i * 0x02);
+        uint16_t param = file->readShort();
+
+        matrixDefinitions.push_back({kind, param});
     }
+
+    drw1 = { matrixDefinitions };
 
     file->position(sectionStart + sectionSize);
 }
@@ -233,69 +236,68 @@ void BmdFile::readJNT1()
     uint32_t sectionStart = file->position() - 4;
     uint32_t sectionSize = file->readInt();
 
-    uint16_t jointCount = file->readShort();
-    file->skip(0x2);
+    uint16_t jointDataCount = file->readShort();
+    assert(file->readShort() == 0xFFFF);
 
-    m_joints.clear();
-    m_joints.reserve(jointCount);
+    uint32_t jointDataTableOffset = file->readInt();
+    uint32_t remapTableOffset = file->readInt();
+    uint32_t nameTableOffset = file->readInt();
 
-    uint32_t jointsOffset = file->readInt();
-    uint32_t unksOffset = file->readInt();
-    uint32_t stringsOffset = file->readInt();
-
-    for(uint32_t i = 0; i < jointCount; i++)
+    std::vector<uint16_t> remapTable;
+    for(int i = 0; i < jointDataCount; i++)
     {
-        file->position(sectionStart + jointsOffset + (i * 0x40));
-
-        Joint joint;
-
-        joint.unk1 = file->readShort();
-        joint.unk2 = file->readByte();
-        file->skip(0x1);
-
-        joint.scale = readVec3();
-        joint.rotation = glm::vec3(
-            float(file->readShort()),
-            float(file->readShort()),
-            float(file->readShort())
-        )  * float(M_PI / 32768.f);
-
-        file->skip(0x2);
-
-        joint.translation = readVec3();
-
-        glm::mat4 mat = glm::scale(glm::mat4(1.0), joint.scale);
-        mat = glm::eulerAngleXYZ(joint.rotation.x, joint.rotation.y, joint.rotation.z) * mat;
-        mat = glm::translate(mat, joint.translation);
-
-        for(SceneGraphNode& node : m_sceneGraph)
-        {
-            if(node.nodeID != i || node.nodeType != 1)
-                continue;
-
-            SceneGraphNode* parentNode = &node;
-            do
-            {
-                if (parentNode->parentIndex == -1)
-                {
-                    parentNode = nullptr;
-                    break;
-                }
-
-                parentNode = &m_sceneGraph[parentNode->parentIndex];
-            } while(parentNode->nodeType != 1);
-
-            if(parentNode != nullptr)
-                joint.finalMatrix = joint.matrix * m_joints[parentNode->nodeID].finalMatrix;
-            else
-                joint.finalMatrix = joint.matrix;
-
-            // TODO this is awkward
-            break;
-        }
-
-        m_joints.push_back(joint);
+        file->position(sectionStart + remapTableOffset + (i * 0x02));
+        remapTable.push_back(file->readShort());
     }
+
+    std::vector<QString> nameTable = readStringTable(sectionStart + nameTableOffset);
+
+    std::vector<Joint> joints;
+    for(int i = 0; i < jointDataCount; i++)
+    {
+        QString& name = nameTable[i];
+        uint32_t jointDataTableIndex = jointDataTableOffset + (remapTable[i] * 0x40);
+
+        file->position(sectionStart + jointDataTableIndex);
+
+        uint16_t flags = file->readShort() & 0x00FF;
+        // Maya / SoftImage special flags
+        uint8_t calcFlags = file->readByte();
+
+        file->skip(0x01);
+
+        float scaleX = file->readFloat();
+        float scaleY = file->readFloat();
+        float scaleZ = file->readFloat();
+
+        int16_t rotationX = file->readShortS() / 0x7FFF * M_PI;
+        int16_t rotationY = file->readShortS() / 0x7FFF * M_PI;
+        int16_t rotationZ = file->readShortS() / 0x7FFF * M_PI;
+
+        file->skip(0x02);
+
+        float translationX = file->readFloat();
+        float translationY = file->readFloat();
+        float translationZ = file->readFloat();
+
+        float boundingSphereRadius = file->readFloat();
+
+        float bboxMinX = file->readFloat();
+        float bboxMinY = file->readFloat();
+        float bboxMinZ = file->readFloat();
+        float bboxMaxX = file->readFloat();
+        float bboxMaxY = file->readFloat();
+        float bboxMaxZ = file->readFloat();
+
+        AABB bbox{{bboxMinX, bboxMinY, bboxMinZ}, {bboxMaxX, bboxMaxY, bboxMaxZ}};
+
+        JointTransformInfo transform{{scaleX, scaleY, scaleZ}, {translationX, translationY, translationZ}};
+        transform.rotation = glm::quat(glm::orientate3(glm::vec3(rotationX, rotationY, rotationZ))); // TODO is this accurate?
+
+        joints.push_back({ name, transform, boundingSphereRadius, bbox, calcFlags });
+    }
+
+    jnt1 = JNT1{ joints };
 
     file->position(sectionStart + sectionSize);
 }
@@ -305,192 +307,7 @@ void BmdFile::readSHP1()
     uint32_t sectionStart = file->position() - 4;
     uint32_t sectionSize = file->readInt();
 
-    uint16_t numBatches = file->readShort();
-    file->skip(0x2);
 
-    uint32_t batchesOffset = file->readInt();
-    file->skip(0x8);
-
-    uint32_t batchAttribsOffset = file->readInt();
-    uint32_t matrixTableOffset = file->readInt();
-    uint32_t dataOffset = file->readInt();
-    uint32_t matrixDataOffset = file->readInt();
-    uint32_t pktLocationsOffset = file->readInt();
-
-    m_batches.clear();
-    m_batches.reserve(numBatches);
-
-    for(uint32_t i = 0; i < numBatches; i++)
-    {
-        Batch batch;
-
-        file->position(sectionStart + batchesOffset + (i * 0x28));
-
-        batch.matrixType = file->readByte();
-        file->skip(0x1);
-
-        // TODO why & 0xFFFF for a short?
-        uint16_t numPackets = file->readShort() & 0xFFFF;
-        uint16_t attribsOffset = file->readShort() & 0xFFFF;
-        uint16_t firstMatrixIndex = file->readShort() & 0xFFFF;
-        uint16_t firstPktIndex = file->readShort() & 0xFFFF;
-
-        file->skip(0x2);
-        batch.unk = file->readFloat();
-
-        std::vector<uint32_t> attribs;
-        file->position(sectionStart + batchAttribsOffset + attribsOffset);
-
-        uint32_t arrayMask = 0;
-
-        while(true)
-        {
-            uint32_t arrayType = file->readInt();
-            uint32_t dataType = file->readInt();
-
-            if(arrayType == 0xFF)
-                break;
-
-            uint32_t attrib = (arrayType & 0xFF) | ((dataType & 0xFF) << 8);
-            attribs.push_back(attrib);
-
-            arrayMask |= 0b1 << arrayType;
-        }
-
-        batch.packets.clear();
-        batch.packets.reserve(numPackets);
-
-        for(uint32_t j = 0; j < numPackets; j++)
-        {
-            Batch::Packet packet;
-
-            file->position(sectionStart + matrixDataOffset + ((firstMatrixIndex + j) * 0x8) + 0x2);
-
-            uint16_t matrixTableSize = file->readShort();
-            uint32_t matrixTableFirstIndex = file->readInt();
-
-            packet.matrixTable.clear();
-            packet.matrixTable.reserve(matrixTableSize);
-
-            file->position(sectionStart + matrixTableOffset + (matrixTableFirstIndex * 0x2));
-            for (int k = 0; k < matrixTableSize; k++)
-                packet.matrixTable[k] = file->readShort();
-
-            file->position(sectionStart + pktLocationsOffset + ((firstPktIndex + j) * 0x8));
-
-            uint32_t pktSize = file->readInt();
-            uint32_t pktOffset = file->readInt();
-
-            file->position(sectionStart + dataOffset + pktOffset);
-            uint32_t packetEnd = file->position() + pktSize;
-
-            while(true)
-            {
-                if(file->position() >= packetEnd)
-                    break;
-
-                // TODO why & 0xFF?
-                uint32_t primitiveType = file->readByte() & 0xFF;
-                if(primitiveType == 0)
-                    break;
-
-                uint16_t numVertices = file->readShort();
-                Batch::Packet::Primitive primitive;
-
-                primitive.arrayMask = arrayMask;
-                primitive.numIndices = numVertices;
-
-                if (arrayMask &  1       ) primitive.posMatrixIndices = std::vector<uint32_t>(numVertices);
-                if (arrayMask & (1 <<  9)) primitive.positionIndices = std::vector<uint32_t>(numVertices);
-                if (arrayMask & (1 << 10)) primitive.normalIndices = std::vector<uint32_t>(numVertices);
-                if (arrayMask & (1 << 11)) primitive.colorIndices[0] = std::vector<uint32_t>(numVertices);
-                if (arrayMask & (1 << 12)) primitive.colorIndices[1] = std::vector<uint32_t>(numVertices);
-                if (arrayMask & (1 << 13)) primitive.texcoordIndices[0] = std::vector<uint32_t>(numVertices);
-                if (arrayMask & (1 << 14)) primitive.texcoordIndices[1] = std::vector<uint32_t>(numVertices);
-                if (arrayMask & (1 << 15)) primitive.texcoordIndices[2] = std::vector<uint32_t>(numVertices);
-                if (arrayMask & (1 << 16)) primitive.texcoordIndices[3] = std::vector<uint32_t>(numVertices);
-                if (arrayMask & (1 << 17)) primitive.texcoordIndices[4] = std::vector<uint32_t>(numVertices);
-                if (arrayMask & (1 << 18)) primitive.texcoordIndices[5] = std::vector<uint32_t>(numVertices);
-                if (arrayMask & (1 << 19)) primitive.texcoordIndices[6] = std::vector<uint32_t>(numVertices);
-                if (arrayMask & (1 << 20)) primitive.texcoordIndices[7] = std::vector<uint32_t>(numVertices);
-
-                primitive.primitiveType = primitiveType;
-
-                for(uint32_t k = 0; k < numVertices; k++)
-                {
-                    for(uint32_t attrib : attribs)
-                    {
-                        uint32_t val = 0;
-
-                        switch(attrib & 0xFF00)
-                        {
-                            case 0x0000:
-                            case 0x0100:
-                            {
-                                val = file->readByte() & 0xFF; // TODO why & 0xFF?
-                                break;
-                            }
-                            case 0x0200:
-                            case 0x0300:
-                            {
-                                val = file->readShort() & 0xFFFF; // TODO why & 0xFFFF?
-                                break;
-                            }
-                            default:
-                                assert(false); //Bmd: unsupported index attrib
-
-                        }
-
-                        switch(attrib & 0x00FF)
-                        {
-                            case 0:
-                            {
-                                primitive.posMatrixIndices[k] = val / 3;
-                                break;
-                            }
-                            case 9:
-                            {
-                                primitive.positionIndices[k] = val;
-                                break;
-                            }
-                            case 10:
-                            {
-                                primitive.normalIndices[k] = val;
-                                break;
-                            }
-                            case 11:
-                            case 12:
-                            {
-                                primitive.colorIndices[(attrib & 0xFF) - 11][k] = val;
-                                break;
-                            }
-                            case 13:
-                            case 14:
-                            case 15:
-                            case 16:
-                            case 17:
-                            case 18:
-                            case 19:
-                            case 20:
-                            {
-                                primitive.texcoordIndices[(attrib & 0xFF) - 13][k] = val;
-                                break;
-                            }
-
-                            default:
-                                assert(false); // Bmd: unsupported index attrib
-                        }
-                    }
-                }
-
-                packet.primitives.push_back(primitive);
-            }
-
-            batch.packets.push_back(packet);
-        }
-
-        m_batches.push_back(batch);
-    }
 
     file->position(sectionStart + sectionSize);
 }

@@ -15,6 +15,10 @@
 #define BLACKHOLE_ENUM_END(name) \
 }; typedef name::name name##_t;
 
+// sometimes M_PI is not defined
+#ifndef M_PI
+#define M_PI (3.14159265358979323846)
+#endif
 
 template<class T>
 class Iterator
@@ -42,20 +46,20 @@ public:
 };
 
 
-template<typename T>
+/*template<typename T>
 class VectorView
 {
-    typedef typename std::vector<T>::const_iterator Iterator;
+    typedef typename  Iterator; // TODO std::vector<T>::const_iterator
 
-    Iterator* m_begin = nullptr;
-    Iterator* m_end = nullptr;
+    const T* m_begin = nullptr;
+    const T* m_end = nullptr;
 public:
-    VectorView(Iterator* begin, Iterator* end) : m_begin(begin), m_end(end) {}
-    Iterator begin() const { return m_begin; }
-    Iterator end()   const { return m_end;   }
+    VectorView(const T* begin, const T* end) : m_begin(begin), m_end(end) {}
+    const T* begin() const { return m_begin; }
+    const T* end()   const { return m_end;   }
 
-    typename std::iterator_traits<Iterator>::reference operator[](std::size_t index) { return m_begin[index]; };
-};
+    typename std::iterator_traits<const T*>::reference operator[](std::size_t index) { return m_begin[index]; };
+};*/
 
 template<typename T, std::size_t H>
 uint32_t indexOf(std::array<T, H> array, T element)
@@ -79,9 +83,12 @@ namespace std {
 
 } // namespace std
 
-QString absolutePath(const QString& gamePath);
+namespace Util
+{
+    QString absolutePath(const QString& gamePath);
 
-bool fileExists(const QString& file);
+    bool fileExists(const QString& file);
 
-float lerp(float a, float b, float t);
-glm::vec3 lerp(glm::vec3 a, glm::vec3 b, float t);
+    float lerp(float a, float b, float t);
+    glm::vec3 lerp(glm::vec3 a, glm::vec3 b, float t);
+};

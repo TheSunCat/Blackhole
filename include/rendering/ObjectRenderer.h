@@ -3,9 +3,18 @@
 #include "smg/BaseObject.h"
 #include "io/BmdFile.h"
 #include "rendering/Texture.h"
+#include "rendering/GX.h"
 
 #include <vector>
 #include <future>
+
+struct DrawCall
+{
+    uint32_t primType;
+    GX::VtxFmt_t vertexFormat;
+    uint32_t srcOffset;
+    uint32_t vertexCount;
+};
 
 class ObjectRenderer
 {

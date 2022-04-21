@@ -16,7 +16,7 @@ ObjectRenderer::ObjectRenderer(BaseObject* obj)
           m_rotation(obj->m_rot), m_scale(obj->m_scl),
           m_modelName(obj->m_name)
 {
-    QString filePath = absolutePath("ObjectData/" + m_modelName + ".arc");
+    QString filePath = Util::absolutePath("ObjectData/" + m_modelName + ".arc");
 
     QFileInfo fileInfo = QFileInfo(filePath);
     if(!fileInfo.exists())

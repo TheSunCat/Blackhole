@@ -13,6 +13,17 @@ namespace GX
 {
 
 // huge thanks to noclip.website for these data structures!
+BLACKHOLE_ENUM_START(VtxFmt) {
+    VTXFMT0 = 0,
+    VTXFMT1 = 1,
+    VTXFMT2 = 2,
+    VTXFMT3 = 3,
+    VTXFMT4 = 4,
+    VTXFMT5 = 5,
+    VTXFMT6 = 6,
+    VTXFMT7 = 7,
+};
+BLACKHOLE_ENUM_END(VtxFmt)
 
 BLACKHOLE_ENUM_START(TexFormat) {
     I4 = 0x0,
@@ -819,9 +830,15 @@ struct VertexArray
     CompType_t compType;
     CompCnt_t compCnt;
     uint8_t compShift;
-    VectorView<uint8_t> buffer;
+    std::span<uint8_t> buffer;
     uint32_t dataOffset;
     uint32_t dataSize;
+};
+
+struct VtxAttrFmt {
+    CompType_t compType;
+    CompCnt_t compCnt;
+    uint32_t compShift; // TODO type?
 };
 
 }; // end namespace GX

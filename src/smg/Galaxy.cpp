@@ -5,7 +5,7 @@
 
 Galaxy::Galaxy(const QString& galaxyName) : m_name(galaxyName)
 {
-    RarcFile scenario(absolutePath("StageData/" + m_name + '/' + m_name + "Scenario.arc"));
+    RarcFile scenario(Util::absolutePath("StageData/" + m_name + '/' + m_name + "Scenario.arc"));
     BcsvFile zonesBcsv(scenario.openFile('/' + m_name + "Scenario/ZoneList.bcsv"));
 
     for(const BcsvFile::Entry& entry : zonesBcsv.m_entries)
