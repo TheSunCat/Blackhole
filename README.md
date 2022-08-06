@@ -1,4 +1,4 @@
-# Blackhole
+# Blackhole <a href="https://liberapay.com/TheSunCat/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"> <img src="https://img.shields.io/liberapay/receives/TheSunCat.svg"></a>
 
 A multi-purpose visual editor for the Galaxy games, aiming for modularity, cross-platform support, and maintainable code.
 
