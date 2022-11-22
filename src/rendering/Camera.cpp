@@ -26,7 +26,7 @@ void Camera::reset()
 
 void Camera::update()
 {
-    m_position = lerp(m_position, m_positionTarget, m_positionDrag);
+    m_position = Util::lerp(m_position, m_positionTarget, m_positionDrag);
     //m_orientation = glm::slerp(m_orientation, m_orientationTarget, m_orientationDrag);
 
     m_front.x = cos(m_rotation.y) * cos(m_rotation.x);

@@ -55,8 +55,9 @@ void ObjectRenderer::initGL()
 
     gl->glBindVertexArray(VAO);
 
-    std::cout << m_model.m_positions.size() << " is the number of verts." << std::endl;;
+    std::cout << m_model.vtx1.vertexArrays.size() << " is the number of vertex arrays." << std::endl;;
 
+    /* TODO
     gl->glBindBuffer(GL_ARRAY_BUFFER, VBO);
     gl->glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(float) * m_model.m_positions.size(), m_model.m_positions.data(), GL_STATIC_DRAW);
 
@@ -93,7 +94,7 @@ void ObjectRenderer::initGL()
     //gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     //gl->glEnableVertexAttribArray(1);
 
-    gl->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, 0);*/
 }
 
 void ObjectRenderer::draw()

@@ -156,7 +156,7 @@ vec4 TevOverflow(vec4 a) { return vec4(TevOverflow(a.r), TevOverflow(a.g), TevOv
         GfxFormat format;
     };
 
-    struct std::array<VertexAttributeGenDef, 12> vtxAttributeGenDefs{
+    inline struct std::array<VertexAttributeGenDef, 12> vtxAttributeGenDefs{
         VertexAttributeGenDef{ VertexAttributeInput::POS,           "Position",      GfxFormat::F32_RGBA },
         VertexAttributeGenDef{ VertexAttributeInput::TEX0123MTXIDX, "TexMtx0123Idx", GfxFormat::F32_RGBA },
         VertexAttributeGenDef{ VertexAttributeInput::TEX4567MTXIDX, "TexMtx4567Idx", GfxFormat::F32_RGBA },

@@ -262,3 +262,8 @@ void BaseFile::setContents(const std::vector<uint8_t>& bytes)
 {
     m_contents = bytes;
 }
+
+std::span<uint8_t> BaseFile::slice(uint32_t start, uint32_t end)
+{
+    return std::span(m_contents.begin() + start, m_contents.begin() + end);
+}
